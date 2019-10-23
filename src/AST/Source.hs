@@ -23,6 +23,7 @@ data Type
   | TLam TypeName Type
   | TTuple [Type]
   | TConstraint Name Type
+  deriving Show
 
 makeBaseFunctor ''Type
 
@@ -30,6 +31,8 @@ data TypeScheme
   = Forall { _vars        :: [TVarName],
              _constraints :: [Type],
              _type_       :: Type }
+  deriving Show
+
 
 makeLenses ''TypeScheme
 
@@ -44,5 +47,6 @@ data Expr
   | Let Name Expr Expr
   | Type TypeName Type Expr
   | Satisfy TypeScheme Expr Expr
+  deriving Show
 
 makeBaseFunctor ''Expr
