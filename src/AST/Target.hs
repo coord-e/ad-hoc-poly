@@ -1,4 +1,11 @@
+{-# LANGUAGE DeriveFoldable    #-}
+{-# LANGUAGE DeriveFunctor     #-}
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
 module AST.Target where
+
+import           Data.Functor.Foldable.TH
 
 type Name = String
 
@@ -12,3 +19,5 @@ data Expr
   | Tuple [Expr]
   | Let Name Expr Expr
   deriving Show
+
+makeBaseFunctor ''Expr
