@@ -1,12 +1,11 @@
 module Reporting.Error.Kind where
 
 import           AST.Source
-import           Compile.Kind
 
-data KindError
-  = UnificationFail Kind Kind
+data KindError a
+  = UnificationFail a a
   | UnboundName TypeName
 
-type Result a = Either a KindError
+type Result a = Either (KindError a) a
 
 
