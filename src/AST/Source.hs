@@ -8,9 +8,11 @@ module AST.Source where
 import           Control.Lens.TH
 import           Data.Functor.Foldable.TH
 
+
 type TVarName = String
 type TypeName = String
 type Name = String
+
 
 data Type
   = TInt
@@ -27,14 +29,15 @@ data Type
 
 makeBaseFunctor ''Type
 
+
 data TypeScheme
   = Forall { _vars        :: [TVarName],
              _constraints :: [Type],
              _type_       :: Type }
   deriving Show
 
-
 makeLenses ''TypeScheme
+
 
 data Expr
   = Int Int
