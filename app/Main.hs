@@ -15,7 +15,7 @@ transpile = fmap emit . compile <=< parse
 main :: IO ()
 main = do
   args <- getArgs
-  content <- readFile $ args !! 0
+  content <- readFile $ head args
   case transpile content of
     Right output -> putStrLn output
-    Left error   -> report error
+    Left err     -> report err
