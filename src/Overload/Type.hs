@@ -21,7 +21,7 @@ data Type
   | TVar TyVar
   | TFun Type Type
   | TTuple [Type]
-  deriving Show
+  deriving (Show, Eq)
 
 makeBaseFunctor ''Type
 
@@ -30,7 +30,7 @@ makeBaseFunctor ''Type
 data Constraint
   = Constraint { _name        :: S.TypeName
                , _requirement :: Type }
-  deriving Show
+  deriving (Show, Eq)
 
 makeLenses ''Constraint
 
@@ -38,7 +38,7 @@ makeLenses ''Constraint
 data PredType
   = PredType { _constraints :: [Constraint]
              , _type_       :: Type }
-  deriving Show
+  deriving (Show, Eq)
 
 makeLenses ''PredType
 
@@ -46,6 +46,6 @@ makeLenses ''PredType
 data TypeScheme
   = Forall { _vars     :: [TyVar],
              _predType :: PredType }
-  deriving Show
+  deriving (Show, Eq)
 
 makeLenses ''TypeScheme

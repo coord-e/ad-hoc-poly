@@ -23,8 +23,8 @@ initTypeEnv = Map.empty
 
 
 data Context
-  = Context { _instantiations :: Map.Map S.Name (TypeScheme, T.Expr)
-            , _overloads      :: Map.Map S.Name TypeScheme
+  = Context { _overloads      :: Map.Map S.Name TypeScheme
+            , _instantiations :: Map.Map S.Name (TypeScheme, T.Expr)
             , _bindings       :: Map.Map S.Name (TypeScheme, T.Expr) }
 
 makeLenses ''Context

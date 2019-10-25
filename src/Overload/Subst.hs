@@ -1,7 +1,10 @@
 module Overload.Subst where
 
+import           Overload.Env          (Context (..))
 import           Overload.Type
 
+import           Control.Exception     (assert)
+import           Control.Lens          hiding (Context)
 import           Data.Functor.Foldable
 import qualified Data.Map              as Map
 import qualified Data.Set              as Set
@@ -43,6 +46,21 @@ instance Substitutable PredType where
 instance Substitutable TypeScheme where
   apply (Subst s) (Forall as p) = Forall as $ apply (Subst $ foldr Map.delete s as) p
   ftv (Forall as p) = ftv p `Set.difference` Set.fromList as
+
+instance Substitutable Context where
+  apply s (Context overs insts binds) = assert (go1 overs == overs) $
+                                        assert (go2 insts == insts) $
+                                        Context overs insts (go2 binds)
+    where
+      go1 = Map.map $ apply s
+      go2 = Map.map $ over _1 (apply s)
+
+  ftv (Context overs insts binds) = assert (go1 overs == Set.empty) $
+                                    assert (go2 insts == Set.empty) $
+                                    go2 binds
+    where
+      go1 = Map.foldr (Set.union . ftv) Set.empty
+      go2 = Map.foldr (Set.union . views _1 ftv) Set.empty
 
 instance (Substitutable a, Substitutable b) => Substitutable (a, b) where
   apply s (a, b) = (apply s a, apply s b)

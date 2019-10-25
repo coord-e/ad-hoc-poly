@@ -18,6 +18,6 @@ data Expr
   | Lam Name Expr
   | Tuple [Expr]
   | Let Name Expr Expr
-  deriving Show
+  deriving (Show, Eq)
 
 makeBaseFunctor ''Expr
