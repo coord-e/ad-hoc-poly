@@ -1,7 +1,7 @@
 module Main where
 
-import           Compile.Compile    (compile)
 import           Emit               (emit)
+import           Overload.Compile   (compile)
 import           Parse              (parse)
 import           Reporting.Report   (report)
 import           Reporting.Result   (Result)

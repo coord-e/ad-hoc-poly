@@ -1,10 +1,10 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Compile.Env where
+module Overload.Env where
 
 import qualified AST.Source      as S
 import qualified AST.Target      as T
-import           Compile.Kind
-import           Compile.Type
+import           Overload.Kind
+import           Overload.Type
 
 import           Control.Lens.TH
 import qualified Data.Map        as Map

@@ -1,9 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
-module Compile.KindInfer where
+module Overload.KindInfer where
 
-import           Compile.Env
-import           Compile.Kind
-import           Compile.Type
+import           Overload.Env
+import           Overload.Kind
+import           Overload.Type
 import           Reporting.Error
 import           Reporting.Error.Kind
 

@@ -1,9 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
-module Compile.TypeEval where
+module Overload.TypeEval where
 
 import qualified AST.Source                as S
-import           Compile.Env
-import           Compile.Type
+import           Overload.Env
+import           Overload.Type
 
 import           Control.Eff
 import           Control.Eff.Reader.Strict
