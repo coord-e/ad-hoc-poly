@@ -35,10 +35,17 @@ data Constraint
 makeLenses ''Constraint
 
 
+data PredType
+  = PredType { _constraints :: [Constraint]
+             , _type_       :: Type }
+  deriving Show
+
+makeLenses ''PredType
+
+
 data TypeScheme
-  = Forall { _vars        :: [TyVar],
-             _constraints :: [Constraint],
-             _type_       :: Type }
+  = Forall { _vars     :: [TyVar],
+             _predType :: PredType }
   deriving Show
 
 makeLenses ''TypeScheme

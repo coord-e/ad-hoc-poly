@@ -11,7 +11,6 @@ import           Control.Eff
 import           Control.Eff.Reader.Strict
 import           Control.Eff.State.Strict
 import           Control.Lens
-import           Control.Monad             (replicateM)
 import           Control.Monad.Extra       (fromMaybeM)
 import           Data.Functor.Foldable
 import qualified Data.Map                  as Map
@@ -53,4 +52,4 @@ translateScheme :: Member (State Infer) r => S.TypeScheme -> Eff r TypeScheme
 translateScheme (S.Forall vs cs t) = do
   as <- mapM (const fresh) vs
   let m = Map.fromList $ zip vs as
-  return $ Forall as (map (translateConstraint m) cs) (translateType m t)
+  return $ Forall as (PredType (map (translateConstraint m) cs) (translateType m t))
