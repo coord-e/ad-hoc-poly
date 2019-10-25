@@ -13,13 +13,13 @@ import qualified Data.Map        as Map
 type KindEnv = Map.Map S.TypeName Kind
 
 initKindEnv :: KindEnv
-initKindEnv = Map.fromList [("Int", Star), ("Char", Star), ("String", Star)]
+initKindEnv = Map.empty
 
 
 type TypeEnv = Map.Map S.TypeName Type
 
 initTypeEnv :: TypeEnv
-initTypeEnv = Map.fromList [("Int", TInt), ("Char", TChar), ("String", TStr)]
+initTypeEnv = Map.empty
 
 
 data Context
