@@ -11,12 +11,7 @@ import           Control.Lens.TH
 import           Data.Functor.Foldable.TH
 
 
-type TyVarId = Int
-
-data TyVar
-  = Unbound TyVarId Int
-  | Bound TyVarId
-  deriving Show
+newtype TyVar = TV Int deriving (Show, Eq, Ord)
 
 -- normalized type (Star kind)
 data Type

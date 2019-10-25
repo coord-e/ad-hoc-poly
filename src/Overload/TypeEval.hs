@@ -51,6 +51,6 @@ translateConstraint _ _ = error "attempt to translate non-Constraint type"
 
 translateScheme :: Member (State Infer) r => S.TypeScheme -> Eff r TypeScheme
 translateScheme (S.Forall vs cs t) = do
-  as <- replicateM (length vs) freshBound
+  as <- mapM (const fresh) vs
   let m = Map.fromList $ zip vs as
   return $ Forall as (map (translateConstraint m) cs) (translateType m t)
