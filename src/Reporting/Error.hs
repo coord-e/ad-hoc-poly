@@ -6,3 +6,4 @@ import           Reporting.Error.Type
 data Error
   = KindError KindError
   | TypeError TypeError
+  deriving Show

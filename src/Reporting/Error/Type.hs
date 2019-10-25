@@ -6,3 +6,4 @@ data TypeError
   = UnificationFail Type Type
   | InfiniteType TVarName Type
   | UnboundVariable Name
+  deriving Show
