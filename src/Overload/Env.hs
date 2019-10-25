@@ -16,7 +16,7 @@ initKindEnv :: KindEnv
 initKindEnv = Map.empty
 
 
-type TypeEnv = Map.Map S.TypeName Type
+type TypeEnv = Map.Map S.TypeName S.Type
 
 initTypeEnv :: TypeEnv
 initTypeEnv = Map.empty

@@ -1,9 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Overload.TypeEval where
 
-import qualified AST.Source                as S
+import           AST.Source
 import           Overload.Env
-import           Overload.Type
 
 import           Control.Eff
 import           Control.Eff.Reader.Strict
@@ -24,6 +23,6 @@ eval (TApp t1 t2) = do
   eval $ cata (subst x t2') body
 eval t = return t
 
-subst :: S.TypeName -> Type -> TypeF Type -> Type
+subst :: TypeName -> Type -> TypeF Type -> Type
 subst n r (TNameF x) | x == n = r
 subst _ _ t          = embed t
