@@ -1,4 +1,4 @@
-module Compile.Kind where
+module Compile.Kind (Kind(..), kind) where
 
 import           AST.Source
 import           Reporting.Error.Kind
