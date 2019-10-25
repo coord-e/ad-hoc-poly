@@ -32,7 +32,3 @@ data TypeScheme
   deriving Show
 
 makeLenses ''TypeScheme
-
-
-eval :: S.Type -> Type
-eval _ = TInt
