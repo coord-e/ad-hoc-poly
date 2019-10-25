@@ -14,6 +14,15 @@ type TypeName = String
 type Name = String
 
 
+data Kind
+  = Star
+  | Constraint
+  | Arrow Kind Kind
+  deriving Show
+
+makeBaseFunctor ''Kind
+
+
 data Type
   = TInt
   | TChar

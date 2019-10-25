@@ -2,7 +2,7 @@ module Reporting.Error.Type where
 
 import           AST.Source
 
-data TypeError a
-  = UnificationFail a a
-  | InfiniteType TVarName a
+data TypeError
+  = UnificationFail Type Type
+  | InfiniteType TVarName Type
   | UnboundVariable Name
