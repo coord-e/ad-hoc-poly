@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
-module Overload.Type (Type(..), TypeF(..), TypeScheme(..)) where
+module Overload.Type where
 
 import qualified AST.Source               as S
 
@@ -41,7 +41,7 @@ makeLenses ''Constraint
 
 
 data TypeScheme
-  = Forall { _vars        :: [TyVarId],
+  = Forall { _vars        :: [TyVar],
              _constraints :: [Constraint],
              _type_       :: Type }
   deriving Show
