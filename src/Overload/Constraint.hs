@@ -7,8 +7,8 @@ import           Overload.Type
 import           Overload.Var
 
 import           Control.Eff
+import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
-import           Control.Eff.State.Strict
 import           Control.Lens
 import           Control.Monad.Extra       (allM, maybeM)
 import qualified Data.Map                  as Map
@@ -16,14 +16,14 @@ import qualified Data.Set                  as Set
 
 
 -- isInstance a b returns True if b is more general than a.
-isInstance :: (Member (State Infer) r, Member (Reader Env) r) => TypeScheme -> TypeScheme -> Eff r Bool
+isInstance :: (Member Fresh r, Member (Reader Env) r) => TypeScheme -> TypeScheme -> Eff r Bool
 isInstance (Forall as1 p1) t2@(Forall as2 p2) = do
-  ts <- mapM (fmap TVar . const fresh) as2
+  ts <- mapM (fmap TVar . const freshv) as2
   let s1 = Subst $ Map.fromList $ zip as1 ts
   let s2 = Subst $ Map.fromList $ zip as2 ts
   (&& Set.disjoint (ftv t2) (Set.fromList as1)) <$> isInstancePred (apply s1 p1) (apply s2 p2)
 
-isInstancePred :: (Member (State Infer) r, Member (Reader Env) r) => PredType -> PredType -> Eff r Bool
+isInstancePred :: (Member Fresh r, Member (Reader Env) r) => PredType -> PredType -> Eff r Bool
 isInstancePred (PredType cs1 t1) (PredType cs2 t2) = (t1 == t2 &&) <$> allM go cs2
   where
     go c@(Constraint x t) = do

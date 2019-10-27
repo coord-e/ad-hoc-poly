@@ -53,11 +53,4 @@ makeLenses ''Candidate
 type WaitList = [Candidate]
 
 
-data Infer
-  = Infer { _unique      :: Int
-          , _constraints :: [(Type, Type)] }
-
-makeLenses ''Infer
-
-initInfer :: Infer
-initInfer = Infer 0 []
+type Constraints = [(Type, Type)]

@@ -6,21 +6,19 @@ import           Overload.Subst
 import           Overload.Type
 
 import           Control.Eff
+import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
-import           Control.Eff.State.Strict
 import           Control.Lens
 import qualified Data.Map                  as Map
 import qualified Data.Set                  as Set
 
 
-fresh :: Member (State Infer) r => Eff r TyVar
-fresh = do
-  modify $ over unique (+1)
-  TV . view unique <$> get
+freshv :: Member Fresh r => Eff r TyVar
+freshv = TV <$> fresh
 
-instantiate :: Member (State Infer) r => TypeScheme -> Eff r PredType
+instantiate :: Member Fresh r => TypeScheme -> Eff r PredType
 instantiate (Forall as (PredType cs t)) = do
-  as' <- mapM (fmap TVar . const fresh) as
+  as' <- mapM (fmap TVar . const freshv) as
   let s = Subst $ Map.fromList $ zip as as'
   return $ PredType cs $ apply s t
 
