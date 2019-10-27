@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-module Overload.Constraint where
+module Overload.Instance where
 
 import           Overload.Env
 import           Overload.Subst
