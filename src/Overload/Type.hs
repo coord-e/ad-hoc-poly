@@ -1,14 +1,19 @@
+{-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE DeriveFoldable    #-}
 {-# LANGUAGE DeriveFunctor     #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
 module Overload.Type where
 
-import qualified AST.Source               as S
+import qualified AST.Source                as S
 
+import           Control.Eff
+import           Control.Eff.Writer.Strict
 import           Control.Lens.TH
 import           Data.Functor.Foldable.TH
+import qualified Data.Map                  as Map
 
 
 newtype TyVar = TV Int deriving (Show, Eq, Ord)
@@ -49,3 +54,26 @@ data TypeScheme
 makeLenses ''TypeScheme
 makeLenses ''PredType
 makeLenses ''Constraint
+
+
+type TypeEnv = Map.Map S.TypeName PredSem
+
+initTypeEnv :: TypeEnv
+initTypeEnv = Map.empty
+
+
+data Sem
+  = SType Type
+  | SConstraint Constraint
+  | SClosure S.TypeName S.Type TypeEnv
+
+data PredSem
+  = PredSem { _constraintsS :: [Constraint]
+            , _typeS        :: Sem }
+
+data SemScheme
+  = SForall { _varsS    :: [TyVar],
+             _predTypeS :: PredSem }
+
+makeLenses ''SemScheme
+makeLenses ''PredSem

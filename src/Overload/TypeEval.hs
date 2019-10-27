@@ -1,55 +1,87 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TupleSections    #-}
+{-# LANGUAGE TemplateHaskell  #-}
 module Overload.TypeEval where
 
 import qualified AST.Source                as S
 import           Overload.Env
+import           Overload.Subst
 import           Overload.Type
 import           Overload.Var
 
 import           Control.Eff
+import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
-import           Control.Eff.State.Strict
+import           Control.Eff.Writer.Strict
 import           Control.Lens
-import           Control.Monad.Extra       (fromMaybeM)
+import           Control.Monad
 import           Data.Functor.Foldable
+import           Data.List                 (partition)
 import qualified Data.Map                  as Map
+import qualified Data.Set                  as Set
 
 
-eval :: Member (Reader Env) r => S.Type -> Eff r S.Type
-eval (S.TName x)               = reader $ flip (Map.!) x . view typeEnv
-eval (S.TFun t1 t2)            = S.TFun <$> eval t1 <*> eval t2
-eval (S.TTuple ts)             = S.TTuple <$> mapM eval ts
-eval (S.TConstraint x t)       = S.TConstraint x <$> eval t
-eval (S.TApp t1 t2) = do
-  t1' <- eval t1
-  t2' <- eval t2
-  let (S.TLam x body) = t1'
-  eval $ cata (subst x t2') body
-eval t = return t
+type TyVarEnv = Map.Map S.TVarName TyVar
 
-subst :: S.TypeName -> S.Type -> S.TypeF S.Type -> S.Type
-subst n r (S.TNameF x) | x == n = r
-subst _ _ t            = embed t
+data TypeEvalEnv
+  = TypeEvalEnv { _typeEnv_ :: TypeEnv
+                , _typeVars :: TyVarEnv }
+
+makeLenses ''TypeEvalEnv
 
 
-translateType :: Map.Map String TyVar -> S.Type -> Type
-translateType m t = run $ runReader m (cata go t)
+eval :: (Member Fresh r, Member (Writer Constraint) r, Member (Reader TypeEvalEnv) r) => S.Type -> Eff r Sem
+eval (S.TName x)               = do
+  PredSem cs t <- reader (flip (Map.!) x . view typeEnv_)
+  mapM_ tell cs
+  return t
+eval (S.TVar x)                = SType . TVar <$> reader (flip (Map.!) x . view typeVars)
+eval (S.TTuple ts)             = SType . TTuple <$> mapM (fmap expectTy . eval) ts
+eval (S.TFun t1 t2)            = SType <$> (TFun <$> evalTy t1 <*> evalTy t2)
   where
-    go S.TIntF         = return TInt
-    go S.TCharF        = return TChar
-    go S.TStrF         = return TStr
-    go (S.TVarF n)     = TVar <$> fromMaybeM (error ("attempt to translate a type with unbound type variable " ++ n)) (reader (Map.lookup n))
-    go (S.TFunF t1 t2) = TFun <$> t1 <*> t2
-    go (S.TTupleF ts)  = TTuple <$> sequence ts
-    go _               = error "attempt to translate non-* type"
+    evalTy = fmap expectTy . eval
+eval (S.TPredicate c t)       = (tell =<< expectConstraint <$> eval c) >> eval t
+eval (S.TApp t1 t2)           = do
+  (x, body, env) <- expectClos <$> eval t1
+  t2' <- eval t2
+  local (set typeEnv_ $ Map.insert x (PredSem [] t2') env) $ eval body
+eval (S.TLam x t) = SClosure x t <$> reader (view typeEnv_)
+eval (S.TConstraint x s)       = SConstraint . Constraint x <$> evalScheme s
+  where
+    evalScheme (S.Forall as t) = do
+      as' <- mapM (const freshv) as
+      (t', cs) <- runListWriter $ expectTy <$> local (over typeVars $ adding as as') (eval t)
+      let (outer, inner) = partition (isBoundBy $ Set.fromList as') cs
+      mapM_ tell outer
+      return $ Forall as' (PredType inner t')
+    isBoundBy as c = Set.disjoint (ftv c) as
+    go (a, a') = Map.insert a a'
+    adding ks vs m = foldr go m (zip ks vs)
 
-translateConstraint :: Map.Map String TyVar -> S.Type -> Constraint
-translateConstraint m (S.TConstraint x t) = Constraint x (translateType m t)
-translateConstraint _ _ = error "attempt to translate non-Constraint type"
 
-translateScheme :: Member (State Infer) r => S.TypeScheme -> Eff r TypeScheme
-translateScheme (S.Forall vs cs t) = do
-  as <- mapM (const fresh) vs
-  let m = Map.fromList $ zip vs as
-  return $ Forall as (PredType (map (translateConstraint m) cs) (translateType m t))
+expectTy :: Sem -> Type
+expectTy (SType t) = t
+expectTy _         = error "a type is expected; invalid kind"
+
+expectClos :: Sem -> (S.TypeName, S.Type, TypeEnv)
+expectClos (SClosure x t env) = (x, t, env)
+expectClos _                  = error "an abstraction is expected; invalid kind"
+
+expectConstraint :: Sem -> Constraint
+expectConstraint (SConstraint c) = c
+expectConstraint _               = error "a constraint is expected; invalid kind"
+
+
+runEvalWithVars :: (Member Fresh r, Member (Reader Env) r) => TyVarEnv -> S.Type -> Eff r PredSem
+runEvalWithVars e t = do
+  tyenv <- reader $ view typeEnv
+  let env = TypeEvalEnv tyenv e
+  (t, cs) <- runListWriter . runReader env $ eval t
+  return $ PredSem cs t
+
+runEval :: (Member Fresh r, Member (Reader Env) r) => S.Type -> Eff r PredSem
+runEval = runEvalWithVars Map.empty
+
+runSchemaEval :: (Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff r SemScheme
+runSchemaEval (S.Forall as t) = do
+  as' <- mapM (const freshv) as
+  SForall as' <$> runEvalWithVars (Map.fromList $ zip as as') t

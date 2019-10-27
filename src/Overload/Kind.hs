@@ -5,7 +5,10 @@
 {-# LANGUAGE TypeFamilies      #-}
 module Overload.Kind where
 
+import qualified AST.Source               as S
 import           Data.Functor.Foldable.TH
+
+import qualified Data.Map                 as Map
 
 
 data Kind
@@ -17,3 +20,7 @@ data Kind
 makeBaseFunctor ''Kind
 
 
+type KindEnv = Map.Map S.TypeName Kind
+
+initKindEnv :: KindEnv
+initKindEnv = Map.empty

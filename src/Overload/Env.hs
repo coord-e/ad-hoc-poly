@@ -10,18 +10,6 @@ import           Control.Lens.TH
 import qualified Data.Map        as Map
 
 
-type KindEnv = Map.Map S.TypeName Kind
-
-initKindEnv :: KindEnv
-initKindEnv = Map.empty
-
-
-type TypeEnv = Map.Map S.TypeName S.Type
-
-initTypeEnv :: TypeEnv
-initTypeEnv = Map.empty
-
-
 data Context
   = Context { _overloads      :: Map.Map S.Name TypeScheme
             , _instantiations :: Map.Map S.Name (TypeScheme, T.Expr)
