@@ -45,6 +45,7 @@ data Expr
   | Tuple [Expr]
   | Let Name Expr Expr
   | Type TypeName Type Expr
+  | Over TypeScheme Expr
   | Satisfy TypeScheme Expr Expr
   deriving Show
 
