@@ -24,28 +24,24 @@ makeBaseFunctor ''Kind
 
 
 data Type
-  = TInt
-  | TChar
-  | TStr
-  | TVar TVarName
+  = TVar TVarName
   | TName TypeName
   | TFun Type Type
   | TApp Type Type
   | TLam TypeName Type
   | TTuple [Type]
-  | TConstraint Name Type
+  | TPredicate Type Type
+  | TConstraint Name TypeScheme
   deriving Show
-
-makeBaseFunctor ''Type
 
 
 data TypeScheme
-  = Forall { _vars        :: [TVarName],
-             _constraints :: [Type],
-             _type_       :: Type }
+  = Forall { _vars  :: [TVarName],
+             _type_ :: Type }
   deriving Show
 
 makeLenses ''TypeScheme
+makeBaseFunctor ''Type
 
 
 data Expr
