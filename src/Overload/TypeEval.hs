@@ -75,8 +75,8 @@ runEvalWithVars :: (Member Fresh r, Member (Reader Env) r) => TyVarEnv -> S.Type
 runEvalWithVars e t = do
   tyenv <- reader $ view typeEnv
   let env = TypeEvalEnv tyenv e
-  (t, cs) <- runListWriter . runReader env $ eval t
-  return $ PredSem cs t
+  (t', cs) <- runListWriter . runReader env $ eval t
+  return $ PredSem cs t'
 
 runEval :: (Member Fresh r, Member (Reader Env) r) => S.Type -> Eff r PredSem
 runEval = runEvalWithVars Map.empty
