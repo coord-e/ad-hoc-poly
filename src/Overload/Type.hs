@@ -13,6 +13,7 @@ import           Data.Functor.Foldable.TH
 
 newtype TyVar = TV Int deriving (Show, Eq, Ord)
 
+
 -- normalized type (Star kind)
 data Type
   = TInt
@@ -29,10 +30,8 @@ makeBaseFunctor ''Type
 -- normalized type (Constraint kind)
 data Constraint
   = Constraint { _name        :: S.TypeName
-               , _requirement :: Type }
+               , _requirement :: TypeScheme }
   deriving (Show, Eq)
-
-makeLenses ''Constraint
 
 
 data PredType
@@ -40,12 +39,13 @@ data PredType
              , _type_       :: Type }
   deriving (Show, Eq)
 
-makeLenses ''PredType
-
 
 data TypeScheme
   = Forall { _vars     :: [TyVar],
              _predType :: PredType }
   deriving (Show, Eq)
 
+
 makeLenses ''TypeScheme
+makeLenses ''PredType
+makeLenses ''Constraint
