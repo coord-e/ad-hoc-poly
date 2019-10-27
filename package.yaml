@@ -27,6 +27,7 @@ dependencies:
 - mtl
 - extensible-effects
 - extra
+- safe
 
 ghc-options:
 - -Wall
