@@ -13,8 +13,6 @@ import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
 import           Control.Eff.Writer.Strict
 import           Control.Lens
-import           Control.Monad
-import           Data.Functor.Foldable
 import           Data.List                 (partition)
 import qualified Data.Map                  as Map
 import qualified Data.Set                  as Set

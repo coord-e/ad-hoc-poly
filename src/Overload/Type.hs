@@ -7,13 +7,11 @@
 {-# LANGUAGE TypeFamilies      #-}
 module Overload.Type where
 
-import qualified AST.Source                as S
+import qualified AST.Source               as S
 
-import           Control.Eff
-import           Control.Eff.Writer.Strict
 import           Control.Lens.TH
 import           Data.Functor.Foldable.TH
-import qualified Data.Map                  as Map
+import qualified Data.Map                 as Map
 
 
 newtype TyVar = TV Int deriving (Show, Eq, Ord)
