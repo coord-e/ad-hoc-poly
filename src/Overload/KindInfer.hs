@@ -37,6 +37,7 @@ kind (TApp t1 t2) = do
 kind (TLam x t) = Arrow Star <$> local (over kindEnv $ Map.insert x Star) (kind t)
 kind (TTuple ts) = mapM_ (unify Star <=< kind) ts >> return Star
 kind (TConstraint _ (Forall _ t)) = (unify Star =<< kind t) >> return Constraint
+kind (TPredicate t1 t2) = (unify Constraint =<< kind t1) >> kind t2
 
 
 unify :: Member (Exc Error) r => Kind -> Kind -> Eff r ()
