@@ -17,9 +17,6 @@ import qualified Data.Map                  as Map
 
 
 kind :: (Member (Reader Env) r, Member (Exc Error) r) => Type -> Eff r Kind
-kind TInt = return Star
-kind TChar = return Star
-kind TStr = return Star
 kind (TVar _) = return Star
 kind (TName n) = fromMaybeM (throwKindError $ UnboundName n) $ reader (Map.lookup n . view kindEnv)
 kind (TFun t1 t2) = do

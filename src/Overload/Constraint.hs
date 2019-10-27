@@ -26,10 +26,9 @@ isInstance (Forall as1 p1) t2@(Forall as2 p2) = do
 isInstancePred :: (Member Fresh r, Member (Reader Env) r) => PredType -> PredType -> Eff r Bool
 isInstancePred (PredType cs1 t1) (PredType cs2 t2) = (t1 == t2 &&) <$> allM go cs2
   where
-    go c@(Constraint x t) = do
-      b <- bound x t
-      i <- inst x t
+    go c@(Constraint x s) = do
+      b <- bound x s
+      i <- inst x s
       return (c `elem` cs1 || b || i)
-    bound x t = maybe False (views _1 (== poly t)) <$> reader (views (context . bindings) (Map.lookup x))
-    inst x t = maybeM (return False) (views _1 (isInstance (poly t))) $ reader (views (context . instantiations) (Map.lookup x))
-    poly t = Forall [] (PredType [] t)
+    bound x s = maybe False (views _1 (== s)) <$> reader (views (context . bindings) (Map.lookup x))
+    inst x s = maybeM (return False) (views _1 (isInstance s)) $ reader (views (context . instantiations) (Map.lookup x))
