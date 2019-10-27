@@ -28,6 +28,10 @@ dependencies:
 - extensible-effects
 - extra
 
+ghc-options:
+- -Wall
+- -Wno-simplifiable-class-constraints
+
 library:
   source-dirs: src
 
