@@ -6,6 +6,6 @@ import           Overload.Type
 
 data TypeError
   = UnificationFail Type Type
-  | InfiniteType S.TVarName Type
+  | InfiniteType TyVar Type
   | UnboundVariable S.Name
   deriving Show

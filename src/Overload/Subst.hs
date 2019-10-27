@@ -15,6 +15,9 @@ newtype Subst = Subst (Map.Map TyVar Type) deriving Show
 nullSubst :: Subst
 nullSubst = Subst Map.empty
 
+singleSubst :: TyVar -> Type -> Subst
+singleSubst = (Subst .) . Map.singleton
+
 compose :: Subst -> Subst -> Subst
 compose s1@(Subst m1) (Subst m2) = Subst $ Map.map (apply s1) m2 `Map.union` m1
 
