@@ -23,13 +23,13 @@ data Type
   | TTuple [Type]
   | TPredicate Type Type
   | TConstraint Name TypeScheme
-  deriving Show
+  deriving (Show, Eq)
 
 
 data TypeScheme
   = Forall { _vars  :: [TVarName],
              _type_ :: Type }
-  deriving Show
+  deriving (Show, Eq)
 
 makeLenses ''TypeScheme
 makeBaseFunctor ''Type
@@ -47,6 +47,6 @@ data Expr
   | Type TypeName Type Expr
   | Over TypeScheme Expr
   | Satisfy TypeScheme Expr Expr
-  deriving Show
+  deriving (Show, Eq)
 
 makeBaseFunctor ''Expr

@@ -66,7 +66,7 @@ infer (S.Over s e) = do
 
 
 binding :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
-binding x t = local (over (context . bindings) (Map.insert x (t, T.Var x)))
+binding x t = local (over (context . bindings) (Map.insert x (t, S.Var x)))
 
 bindingT :: Member (Reader Env) r => S.Name -> Type -> Eff r a -> Eff r a
 bindingT x = binding x . scheme . predt

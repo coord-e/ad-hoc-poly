@@ -2,7 +2,6 @@
 module Overload.Env where
 
 import qualified AST.Source      as S
-import qualified AST.Target      as T
 import           Overload.Kind
 import           Overload.Type
 
@@ -12,8 +11,8 @@ import qualified Data.Map        as Map
 
 data Context
   = Context { _overloads      :: Map.Map S.Name TypeScheme
-            , _instantiations :: Map.Map S.Name (TypeScheme, T.Expr)
-            , _bindings       :: Map.Map S.Name (TypeScheme, T.Expr) }
+            , _instantiations :: Map.Map S.Name (TypeScheme, S.Expr)
+            , _bindings       :: Map.Map S.Name (TypeScheme, S.Expr) }
 
 makeLenses ''Context
 
