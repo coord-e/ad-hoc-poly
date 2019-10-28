@@ -10,7 +10,7 @@ import           Control.Eff
 import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
 import           Control.Lens
-import           Control.Monad.Extra       (allM, maybeM)
+import           Control.Monad.Extra       (allM, anyM, maybeM)
 import qualified Data.Map                  as Map
 import qualified Data.Set                  as Set
 
@@ -31,4 +31,4 @@ isInstancePred (PredType cs1 t1) (PredType cs2 t2) = (t1 == t2 &&) <$> allM go c
       i <- inst x s
       return (c `elem` cs1 || b || i)
     bound x s = maybe False (views _1 (== s)) <$> reader (views (context . bindings) (Map.lookup x))
-    inst x s = maybeM (return False) (views _1 (isInstance s)) $ reader (views (context . instantiations) (Map.lookup x))
+    inst x s = maybeM (return False) (anyM $ views _1 (isInstance s)) $ reader (views (context . instantiations) (Map.lookup x))

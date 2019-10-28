@@ -56,17 +56,19 @@ instance Substitutable TypeScheme where
 instance Substitutable Context where
   apply s (Context overs insts binds) = assert (go1 overs == overs) $
                                         assert (go2 insts == insts) $
-                                        Context overs insts (go2 binds)
+                                        Context overs insts (go3 binds)
     where
       go1 = Map.map $ apply s
-      go2 = Map.map $ over _1 (apply s)
+      go2 = Map.map . map . over _1 $ apply s
+      go3 = Map.map . over _1 $ apply s
 
   ftv (Context overs insts binds) = assert (go1 overs == Set.empty) $
                                     assert (go2 insts == Set.empty) $
-                                    go2 binds
+                                    go3 binds
     where
       go1 = Map.foldr (Set.union . ftv) Set.empty
-      go2 = Map.foldr (Set.union . views _1 ftv) Set.empty
+      go2 = Map.foldr (Set.union . foldr (Set.union . views _1 ftv) Set.empty) Set.empty
+      go3 = Map.foldr (Set.union . views _1 ftv) Set.empty
 
 instance (Substitutable a, Substitutable b) => Substitutable (a, b) where
   apply s (a, b) = (apply s a, apply s b)

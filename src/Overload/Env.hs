@@ -11,7 +11,7 @@ import qualified Data.Map        as Map
 
 data Context
   = Context { _overloads      :: Map.Map S.Name TypeScheme
-            , _instantiations :: Map.Map S.Name (TypeScheme, S.Expr)
+            , _instantiations :: Map.Map S.Name [(TypeScheme, S.Expr)]
             , _bindings       :: Map.Map S.Name (TypeScheme, S.Expr) }
 
 makeLenses ''Context
