@@ -44,7 +44,10 @@ infer (S.Var x) = maybeM (maybeM (throwError $ TypeError $ UnboundVariable x) in
   where
     bound = reader (views (context . bindings) (Map.lookup x))
     overload = reader (views (context . overloads) (Map.lookup x))
-    inferVarBound (s, e) = (, e) <$> instantiate s
+    inferVarBound (s, e) = do
+      p <- instantiate s
+      (p', e') <- infer e
+      (, e') <$> unifyP p p'
     inferVarOver s = do
       p <- instantiate s
       i <- fresh
@@ -84,3 +87,6 @@ overpred f = uncurry PredType . second f . foldr go ([], [])
 
 unify :: Member (State Constraints) r => Type -> Type -> Eff r ()
 unify t1 t2 = modify ((t1, t2):)
+
+unifyP :: Member (State Constraints) r => PredType -> PredType -> Eff r PredType
+unifyP (PredType cs1 t1) (PredType cs2 t2) = unify t1 t2 >> return (PredType (cs1 ++ cs2) t1)
