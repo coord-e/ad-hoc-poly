@@ -39,6 +39,9 @@ kind (TTuple ts) = mapM_ (unify Star <=< kind) ts >> return Star
 kind (TConstraint _ (Forall _ t)) = (unify Star =<< kind t) >> return Constraint
 kind (TPredicate t1 t2) = (unify Constraint =<< kind t1) >> kind t2
 
+kindTo :: (Member (Reader Env) r, Member (Exc Error) r) => Type -> Kind -> Eff r ()
+kindTo t k = unify k =<< kind t
+
 
 unify :: Member (Exc Error) r => Kind -> Kind -> Eff r ()
 unify Star Star                   = return ()

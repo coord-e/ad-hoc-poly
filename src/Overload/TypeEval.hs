@@ -79,7 +79,7 @@ runEvalWithVars e t = do
 runEval :: (Member Fresh r, Member (Reader Env) r) => S.Type -> Eff r PredSem
 runEval = runEvalWithVars Map.empty
 
-runSchemaEval :: (Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff r SemScheme
-runSchemaEval (S.Forall as t) = do
+runSchemeEval :: (Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff r SemScheme
+runSchemeEval (S.Forall as t) = do
   as' <- mapM (const freshv) as
   SForall as' <$> runEvalWithVars (Map.fromList $ zip as as') t

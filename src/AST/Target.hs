@@ -8,6 +8,7 @@ module AST.Target where
 import           Data.Functor.Foldable.TH
 
 type Name = String
+type PlaceholderId = Int
 
 data Expr
   = Int Int
@@ -18,6 +19,7 @@ data Expr
   | Lam Name Expr
   | Tuple [Expr]
   | Let Name Expr Expr
+  | Placeholder PlaceholderId
   deriving (Show, Eq)
 
 makeBaseFunctor ''Expr
