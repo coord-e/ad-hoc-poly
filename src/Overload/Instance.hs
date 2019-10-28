@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Overload.Instance where
 
+import qualified AST.Source                as S
 import           Overload.Env
 import           Overload.Subst
 import           Overload.Type
@@ -10,8 +11,10 @@ import           Control.Eff
 import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
 import           Control.Lens
-import           Control.Monad.Extra       (allM, anyM, maybeM)
+import           Control.Monad             (join)
+import           Control.Monad.Extra       (allM, findM)
 import qualified Data.Map                  as Map
+import           Data.Maybe                (isJust)
 import qualified Data.Set                  as Set
 
 
@@ -24,11 +27,15 @@ isInstance (Forall as1 p1) t2@(Forall as2 p2) = do
   (&& Set.disjoint (ftv t2) (Set.fromList as1)) <$> isInstancePred (apply s1 p1) (apply s2 p2)
 
 isInstancePred :: (Member Fresh r, Member (Reader Env) r) => PredType -> PredType -> Eff r Bool
-isInstancePred (PredType cs1 t1) (PredType cs2 t2) = (t1 == t2 &&) <$> allM go cs2
+isInstancePred (PredType cs1 t1) (PredType cs2 t2) = (t1 == t2 &&) <$> allM check cs2
   where
-    go c@(Constraint x s) = do
-      b <- bound x s
-      i <- inst x s
-      return (c `elem` cs1 || b || i)
-    bound x s = maybe False (views _1 (== s)) <$> reader (views (context . bindings) (Map.lookup x))
-    inst x s = maybeM (return False) (anyM $ views _1 (isInstance s)) $ reader (views (context . instantiations) (Map.lookup x))
+    check c = (|| c `elem` cs1) <$> canBeEliminated c
+
+findInstantiation :: (Member Fresh r, Member (Reader Env) r) => S.Name -> TypeScheme -> Eff r (Maybe (TypeScheme, S.Expr))
+findInstantiation x s = fmap join . mapM (findM . views _1 $ isInstance s) =<< reader (views (context . instantiations) $ Map.lookup x)
+
+canBeEliminated :: (Member Fresh r, Member (Reader Env) r) => Constraint -> Eff r Bool
+canBeEliminated (Constraint x s) = (||) <$> bound <*> inst
+  where
+    bound = maybe False (views _1 (== s)) <$> reader (views (context . bindings) $ Map.lookup x)
+    inst = isJust <$> findInstantiation x s
