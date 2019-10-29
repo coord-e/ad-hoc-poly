@@ -54,4 +54,4 @@ typeSchemeBase = do
       return xs
 
 typeScheme :: Parser TypeScheme
-typeScheme = try (parens typeSchemeBase) <|> typeScheme
+typeScheme = try (parens typeSchemeBase) <|> typeSchemeBase
