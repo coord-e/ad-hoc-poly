@@ -37,7 +37,7 @@ localInfer (S.Str s)    = return (predt TStr, T.Str s)
 localInfer (S.Tuple xs) = bimap (overpred TTuple) T.Tuple . unzip <$> mapM localInfer xs
 localInfer (S.Lam x e)  = do
   tv <- TVar <$> freshv
-  (PredType cs ret, e') <- bindingT x tv $ localInfer e
+  (PredType cs ret, e') <- withBinding x (scheme $ predt tv) (S.Var x) $ localInfer e
   return (PredType cs (TFun tv ret), T.Lam x e')
 localInfer (S.App e1 e2) = do
   tv <- TVar <$> freshv
@@ -66,7 +66,7 @@ localInfer (S.Type x t e) = do
   local (over typeEnv $ Map.insert x s) $ local (over kindEnv $ Map.insert x k) $ localInfer e
 localInfer (S.Over s e) = do
   (x, s') <- extractConstraint s
-  local (over (context . overloads) $ Map.insert x s') $ localInfer e
+  withOverload x s' $ localInfer e
 localInfer (S.Satisfy sc e1 e2) = do
   (x, sc') <- extractConstraint sc
   (p1, e1', left) <- raise $ globalInfer e1
@@ -111,11 +111,8 @@ withInstance x i = local (over (context . instantiations) (Map.adjust (i:) x))
 withBinding :: Member (Reader Env) r => S.Name -> TypeScheme -> S.Expr -> Eff r a -> Eff r a
 withBinding x t e = local (over (context . bindings) (Map.insert x (t, e)))
 
-binding :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
-binding x t = local (over (context . bindings) (Map.insert x (t, S.Var x)))
-
-bindingT :: Member (Reader Env) r => S.Name -> Type -> Eff r a -> Eff r a
-bindingT x = binding x . scheme . predt
+withOverload :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
+withOverload x t = local (over (context . overloads) (Map.insert x t))
 
 scheme :: PredType -> TypeScheme
 scheme = Forall []
