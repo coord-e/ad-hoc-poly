@@ -41,8 +41,8 @@ constraint = do
   x <- name
   TConstraint x <$> typeScheme
 
-typeScheme :: Parser TypeScheme
-typeScheme = do
+typeSchemeBase :: Parser TypeScheme
+typeSchemeBase = do
   xs <- qual <|> pure []
   Forall xs <$> type_
   where
@@ -51,3 +51,6 @@ typeScheme = do
       xs <- some tvarName
       symbol "."
       return xs
+
+typeScheme :: Parser TypeScheme
+typeScheme = try (parens typeSchemeBase) <|> typeScheme
