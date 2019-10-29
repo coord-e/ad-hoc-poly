@@ -1,6 +1,10 @@
 module Reporting.Report where
 
-import           Reporting.Error
+import           System.IO
 
-report :: Error -> IO ()
-report _ = return ()
+
+class Report a where
+  report :: a -> String
+
+printReport :: Report a => a -> IO ()
+printReport = hPutStrLn stderr . report
