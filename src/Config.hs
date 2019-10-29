@@ -18,3 +18,9 @@ data Config
            , _bindings     :: Map.Map String String }
 
 makeLenses ''Config
+
+
+loadDefaultConfigFile :: IO Config
+loadDefaultConfigFile = return $ Config (Map.fromList [("Int", "*"), ("Char", "*"), ("Float", "*"), ("String", "*"), ("Bool", "*")])
+                                 (LiteralTypes "Int" "Float" "Char" "Bool" "String")
+                                 (Map.fromList [("eqInt", "Int -> Int -> Bool"), ("eqChar", "Char -> Char -> Bool")])

@@ -1,5 +1,6 @@
 module Main where
 
+import           Config             (Config, loadDefaultConfigFile)
 import           Emit               (emit)
 import           Overload           (compile)
 import           Parse              (parse)
@@ -9,13 +10,15 @@ import           Reporting.Result   (Result)
 import           Control.Monad      ((<=<))
 import           System.Environment (getArgs)
 
-transpile :: String -> Result String
-transpile = fmap emit . compile <=< parse
+
+transpile :: Config -> String -> Result String
+transpile c = fmap emit . compile c <=< parse
 
 main :: IO ()
 main = do
   args <- getArgs
   content <- readFile $ head args
-  case transpile content of
+  config <- loadDefaultConfigFile
+  case transpile config content of
     Right output -> putStrLn output
     Left err     -> printReport err
