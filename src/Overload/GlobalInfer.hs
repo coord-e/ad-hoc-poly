@@ -38,7 +38,7 @@ scanWaitList s (Candidate i x p c:wl) (ap, ae, m) = do
       scanWaitList s (wl ++ wl') (ap, ae, IntMap.insert i e' m)
     Nothing -> do
       n <- freshn x
-      tell n
+      tell x
       let (PredType cs t) = ap
       let (PredType cs' t') = p
       let c = Constraint x $ scheme p
