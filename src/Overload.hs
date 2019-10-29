@@ -14,12 +14,12 @@ import           Control.Eff.Exception
 import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
 import           Control.Eff.State.Strict
-import           Control.Monad             (when)
+import           Control.Monad             (unless)
 
 
 compile :: S.Expr -> Result T.Expr
 compile e = do
   ((_, e', left), cs) <- run . runError . runState [] . runReader initEnv . runFresh' 0 $ globalInfer e
   _ <- runSolve cs
-  when (not $ null left) (Left $ TypeError $ UnresolvedVariable left)
+  unless (null left) (Left $ TypeError $ UnresolvedVariable left)
   return e'
