@@ -1,4 +1,4 @@
-module Overload.Compile where
+module Overload where
 
 import qualified AST.Source                as S
 import qualified AST.Target                as T
