@@ -6,6 +6,8 @@ module Overload.LocalInfer where
 import qualified AST.Source                as S
 import qualified AST.Target                as T
 import           Overload.Env
+import {-# SOURCE #-} Overload.GlobalInfer
+import           Overload.Instance
 import qualified Overload.Kind             as K
 import           Overload.KindInfer        (kind, kindTo)
 import           Overload.Type
@@ -17,12 +19,13 @@ import           Reporting.Error.Type
 
 import           Control.Eff
 import           Control.Eff.Exception
+import           Control.Eff.Extend        (raise)
 import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
 import           Control.Eff.State.Strict
 import           Control.Eff.Writer.Strict
 import           Control.Lens
-import           Control.Monad.Extra       (maybeM)
+import           Control.Monad.Extra       (maybeM, whenM)
 import           Data.Bifunctor
 import qualified Data.Map                  as Map
 
@@ -62,20 +65,51 @@ localInfer (S.Type x t e) = do
   s <- runEval t
   local (over typeEnv $ Map.insert x s) $ local (over kindEnv $ Map.insert x k) $ localInfer e
 localInfer (S.Over s e) = do
-  kindTo' s K.Constraint
-  SForall as (PredSem cs t) <- runSchemeEval s
-  let (Constraint x (Forall as' (PredType cs' t'))) = extract t
-  let s' = Forall (as ++ as') (PredType (cs ++ cs') t')
+  (x, s') <- extractConstraint s
   local (over (context . overloads) $ Map.insert x s') $ localInfer e
-  where
-    extract (SConstraint c) = c
-    kindTo' (S.Forall _ t) = kindTo t
+localInfer (S.Satisfy sc e1 e2) = do
+  (x, sc') <- extractConstraint sc
+  (p1, e1', left) <- raise $ globalInfer e1
+  s1 <- generalize p1
+  whenM (not <$> s1 `isInstance` sc') (throwError . TypeError $ UnableToInstantiate s1 sc')
+  -- TODO: check overlapping instances
+  n <- freshn x
+  let inst = (sc', applyLeft n left)
+  (p2, e2') <- withInstance x inst $ localInfer e2
+  return (p2, T.Let n e1' e2')
+localInfer (S.Let x e1 e2) = do
+  (p1, e1', left) <- raise $ globalInfer e1
+  s1 <- generalize p1
+  n <- freshn x
+  (p2, e2') <- withBinding x s1 (applyLeft n left) . withBinding n s1 (S.Var n) $ localInfer e2
+  return (p2, T.Let n e1' e2')
 
 runLocalInfer :: S.Expr -> Eff '[Exc Error, Fresh, Reader Env, State Constraints] (PredType, T.Expr, [Candidate])
 runLocalInfer e = do
   ((p, e'), wl) <- runListWriter $ localInfer e
   return (p, e', wl)
 
+
+extractConstraint :: (Member (Exc Error) r, Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff r (S.Name, TypeScheme)
+extractConstraint s@(S.Forall _ t) = do
+  kindTo t K.Constraint
+  SForall as (PredSem cs t') <- runSchemeEval s
+  let Constraint x (Forall as' (PredType cs' t'')) = extract t'
+  return (x, Forall (as ++ as') (PredType (cs ++ cs') t''))
+  where
+    extract (SConstraint c) = c
+    extract _               = error "something went wrong in kinding"
+
+-- > applyLeft "n" ["a", "b", "c"]
+-- App (App (App (Var "n") (Var "a")) (Var "b")) (Var "c")
+applyLeft :: S.Name -> [S.Name] -> S.Expr
+applyLeft n = foldl ((. S.Var) . S.App) (S.Var n)
+
+withInstance :: Member (Reader Env) r => S.Name -> (TypeScheme, S.Expr) -> Eff r a -> Eff r a
+withInstance x i = local (over (context . instantiations) (Map.adjust (i:) x))
+
+withBinding :: Member (Reader Env) r => S.Name -> TypeScheme -> S.Expr -> Eff r a -> Eff r a
+withBinding x t e = local (over (context . bindings) (Map.insert x (t, e)))
 
 binding :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
 binding x t = local (over (context . bindings) (Map.insert x (t, S.Var x)))
