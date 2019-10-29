@@ -78,7 +78,7 @@ localInfer (S.Satisfy sc e1 e2) = do
   -- TODO: check overlapping instances
   n <- freshn x
   let inst = (sc', applyLeft n left)
-  (p2, e2') <- withInstance x inst $ localInfer e2
+  (p2, e2') <- withInstance x inst $ withBinding n s1 (S.Var n) $ localInfer e2
   return (p2, T.Let n e1' e2')
 localInfer (S.Let x e1 e2) = do
   (p1, e1', left) <- raise $ globalInfer e1
