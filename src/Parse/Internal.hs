@@ -1,7 +1,5 @@
 module Parse.Internal where
 
-import           AST.Source
-
 import           Data.Functor
 import           Data.Void
 import           Text.Megaparsec
@@ -29,5 +27,5 @@ lexeme = L.lexeme space
 ident :: Parser String
 ident = lexeme $ (:) <$> C.letterChar <*> many C.alphaNumChar
 
-name :: Parser Name
-name = ident
+rword :: String -> Parser ()
+rword w = (lexeme . try) (C.string w *> notFollowedBy C.alphaNumChar)

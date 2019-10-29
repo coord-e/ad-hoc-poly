@@ -1,17 +1,12 @@
-module Parse.Type where
+module Parse.Type (typeName, type_, typeScheme) where
 
 import           AST.Source                     hiding (type_)
 import           Parse.Internal
+import           Parse.Name
 
 import           Control.Monad.Combinators.Expr
 import           Text.Megaparsec
 
-
-typeName :: Parser TypeName
-typeName = ident
-
-tvarName :: Parser TVarName
-tvarName = symbol "'" >> ident
 
 term :: Parser Type
 term = try (parens type_)

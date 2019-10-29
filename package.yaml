@@ -28,6 +28,8 @@ dependencies:
 - extensible-effects
 - extra
 - safe
+- megaparsec
+- parser-combinators
 
 ghc-options:
 - -Wall
