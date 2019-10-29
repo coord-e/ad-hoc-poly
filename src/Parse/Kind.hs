@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Parse.Kind where
 
 import           AST.Source

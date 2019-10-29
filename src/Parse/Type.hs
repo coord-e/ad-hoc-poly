@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Parse.Type (typeName, type_, typeScheme) where
 
 import           AST.Source                     hiding (type_)

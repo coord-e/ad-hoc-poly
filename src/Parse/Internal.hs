@@ -1,13 +1,15 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Parse.Internal where
 
 import           Data.Functor
+import           Data.Text                  hiding (empty)
 import           Data.Void
 import           Text.Megaparsec
 import qualified Text.Megaparsec.Char       as C
 import qualified Text.Megaparsec.Char.Lexer as L
 
 
-type Parser = Parsec Void String
+type Parser = Parsec Void Text
 
 
 space :: Parser ()
@@ -15,7 +17,7 @@ space = L.space C.space1 empty block
   where
     block = L.skipBlockComment "(*" "*)"
 
-symbol :: String -> Parser ()
+symbol :: Text -> Parser ()
 symbol = void . L.symbol space
 
 parens :: Parser a -> Parser a
@@ -27,5 +29,5 @@ lexeme = L.lexeme space
 ident :: Parser String
 ident = lexeme $ (:) <$> C.letterChar <*> many C.alphaNumChar
 
-rword :: String -> Parser ()
+rword :: Text -> Parser ()
 rword w = (lexeme . try) (C.string w *> notFollowedBy C.alphaNumChar)

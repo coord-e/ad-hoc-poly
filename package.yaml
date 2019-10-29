@@ -30,6 +30,9 @@ dependencies:
 - safe
 - megaparsec
 - parser-combinators
+- yaml
+- aeson
+- text
 
 ghc-options:
 - -Wall

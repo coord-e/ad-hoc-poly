@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Parse.Expr where
 
 import           AST.Source                     hiding (type_)
