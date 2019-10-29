@@ -8,5 +8,6 @@ data TypeError
   = UnificationFail Type Type
   | InfiniteType TyVar Type
   | UnableToInstantiate TypeScheme TypeScheme
+  | UnresolvedVariable [S.Name]
   | UnboundVariable S.Name
   deriving Show

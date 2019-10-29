@@ -26,7 +26,7 @@ type PSubst = IntMap.IntMap T.Expr
 
 
 -- TODO: implement without primitive recursion
-scanWaitList :: Subst -> WaitList -> (PredType, T.Expr, PSubst) -> Eff '[Writer S.Name, Exc Error, Fresh, Reader Env, State Constraints] (PredType, T.Expr, PSubst)
+scanWaitList :: Subst -> WaitList -> (PredType, T.Expr, PSubst) -> Eff '[Writer S.Name, Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr, PSubst)
 scanWaitList _ [] acc = return acc
 scanWaitList s (Candidate i x p:wl) (ap, ae, m) = do
   inst <- findInstantiation x . scheme $ apply s p
@@ -43,12 +43,12 @@ scanWaitList s (Candidate i x p:wl) (ap, ae, m) = do
       let c = Constraint x $ scheme p
       scanWaitList s wl (PredType (c:cs++cs') (TFun t' t), T.Lam n ae, IntMap.insert i (T.Var n) m)
 
-runScanWaitList :: Subst -> PredType -> T.Expr -> WaitList -> Eff '[Exc Error, Fresh, Reader Env, State Constraints] (PredType, T.Expr, PSubst, [S.Name])
+runScanWaitList :: Subst -> PredType -> T.Expr -> WaitList -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr, PSubst, [S.Name])
 runScanWaitList s p e wl = do
   ((p', e', m), left) <- runListWriter $ scanWaitList s wl (p, e, IntMap.empty)
   return (p', e', m, left)
 
-globalInfer :: S.Expr -> Eff '[Exc Error, Fresh, Reader Env, State Constraints] (PredType, T.Expr, [S.Name])
+globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr, [S.Name])
 globalInfer e = do
   (p, e', waitlist) <- runLocalInfer e
   subst <- solve =<< get  -- TODO: save this solve and use later?

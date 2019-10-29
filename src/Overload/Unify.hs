@@ -22,6 +22,9 @@ unifyP :: Member (State Constraints) r => PredType -> PredType -> Eff r PredType
 unifyP (PredType cs1 t1) (PredType cs2 t2) = unify t1 t2 >> return (PredType (cs1 ++ cs2) t1)
 
 
+runSolve :: [(Type, Type)] -> Either Error Subst
+runSolve cs = run . runError $ solve cs
+
 solve :: Member (Exc Error) r => [(Type, Type)] -> Eff r Subst
 solve [] = return nullSubst
 solve ((t1, t2) : cs) = do

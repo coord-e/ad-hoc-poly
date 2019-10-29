@@ -30,7 +30,7 @@ import           Data.Bifunctor
 import qualified Data.Map                  as Map
 
 
-localInfer :: S.Expr -> Eff '[Writer Candidate, Exc Error, Fresh, Reader Env, State Constraints] (PredType, T.Expr)
+localInfer :: S.Expr -> Eff '[Writer Candidate, Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr)
 localInfer (S.Int i)    = return (predt TInt, T.Int i)
 localInfer (S.Char c)   = return (predt TChar, T.Char c)
 localInfer (S.Str s)    = return (predt TStr, T.Str s)
@@ -84,7 +84,7 @@ localInfer (S.Let x e1 e2) = do
   (p2, e2') <- withBinding x s1 (applyLeft n left) . withBinding n s1 (S.Var n) $ localInfer e2
   return (p2, T.Let n e1' e2')
 
-runLocalInfer :: S.Expr -> Eff '[Exc Error, Fresh, Reader Env, State Constraints] (PredType, T.Expr, [Candidate])
+runLocalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr, [Candidate])
 runLocalInfer e = do
   ((p, e'), wl) <- runListWriter $ localInfer e
   return (p, e', wl)

@@ -14,4 +14,4 @@ import           Control.Eff.Reader.Strict
 import           Control.Eff.State.Strict
 
 
-globalInfer :: S.Expr -> Eff '[Exc Error, Fresh, Reader Env, State Constraints] (PredType, T.Expr, [S.Name])
+globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr, [S.Name])
