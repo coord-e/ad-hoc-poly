@@ -9,6 +9,9 @@ import           Text.Megaparsec
 exprReserved :: [String]
 exprReserved = ["let", "in", "type", "over", "satisfy"]
 
+typeReserved :: [String]
+typeReserved = ["constraint"]
+
 makeIdentifier :: [String] -> Parser String
 makeIdentifier rws = (lexeme . try) (ident >>= check)
   where
@@ -19,7 +22,7 @@ name :: Parser Name
 name = makeIdentifier exprReserved
 
 typeName :: Parser TypeName
-typeName = ident
+typeName = makeIdentifier typeReserved
 
 tvarName :: Parser TVarName
-tvarName = symbol "'" >> ident
+tvarName = symbol "'" >> typeName
