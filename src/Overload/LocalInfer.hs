@@ -108,13 +108,19 @@ applyLeft :: S.Name -> [S.Name] -> S.Expr
 applyLeft n = foldl ((. S.Var) . S.App) (S.Var n)
 
 withInstance :: Member (Reader Env) r => S.Name -> (TypeScheme, S.Expr) -> Eff r a -> Eff r a
-withInstance x i = local (over (context . instantiations) (Map.adjust (i:) x))
+withInstance x i = local (over (context . instantiations) (adjustWithDefault (i:) [i] x))
 
 withBinding :: Member (Reader Env) r => S.Name -> TypeScheme -> S.Expr -> Eff r a -> Eff r a
 withBinding x t e = local (over (context . bindings) (Map.insert x (t, e)))
 
 withOverload :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
 withOverload x t = local (over (context . overloads) (Map.insert x t))
+
+adjustWithDefault :: Ord k => (a -> a) -> a -> k -> Map.Map k a -> Map.Map k a
+adjustWithDefault f def = Map.alter go
+  where
+    go (Just x) = Just (f x)
+    go Nothing  = Just def
 
 literalType :: (Member (Exc Error) r, Member (Reader Env) r, Member Fresh r) => (LiteralTypes -> S.TypeScheme) -> Eff r PredType
 literalType f = do
