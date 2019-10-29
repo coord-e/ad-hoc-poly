@@ -13,6 +13,7 @@ term = try (parens type_)
   <|> tuple
   <|> lambda
   <|> constraint
+  <|> TName <$> typeName
   <|> TVar <$> tvarName
 
 table :: [[Operator Parser Type]]
