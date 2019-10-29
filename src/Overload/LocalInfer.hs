@@ -72,19 +72,21 @@ localInfer (S.Over s e) = do
   withOverload x s' $ localInfer e
 localInfer (S.Satisfy sc e1 e2) = do
   (x, sc') <- extractConstraint sc
-  (p1, e1', left) <- raise $ globalInfer e1
+  (p1, praw, e1', left) <- raise $ globalInfer e1
   s1 <- generalize p1
-  unlessM (s1 `isInstance` sc') (throwError . TypeError $ UnableToInstantiate x s1 sc')
+  sraw <- generalize praw
+  unlessM (sraw `isInstance` sc') (throwError . TypeError $ UnableToInstantiate x s1 sc')
   -- TODO: check overlapping instances
   n <- freshn x
   let inst = (sc', applyLeft n left)
   (p2, e2') <- withInstance x inst $ withBinding n s1 (S.Var n) $ localInfer e2
   return (p2, T.Let n e1' e2')
 localInfer (S.Let x e1 e2) = do
-  (p1, e1', left) <- raise $ globalInfer e1
+  (p1, praw, e1', left) <- raise $ globalInfer e1
   s1 <- generalize p1
+  sraw <- generalize praw
   n <- freshn x
-  (p2, e2') <- withBinding x s1 (applyLeft n left) . withBinding n s1 (S.Var n) $ localInfer e2
+  (p2, e2') <- withBinding x sraw (applyLeft n left) . withBinding n s1 (S.Var n) $ localInfer e2
   return (p2, T.Let n e1' e2')
 
 runLocalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr, [Candidate])

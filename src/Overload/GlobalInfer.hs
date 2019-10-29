@@ -49,12 +49,12 @@ runScanWaitList s p e wl = do
   ((p', e', m), left) <- runListWriter $ scanWaitList s wl (p, e, IntMap.empty)
   return (p', e', m, left)
 
-globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr, [S.Name])
+globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, PredType, T.Expr, [S.Name])
 globalInfer e = do
   (p, e', waitlist) <- runLocalInfer e
   subst <- solve =<< get  -- TODO: save this solve and use later?
   (p', e'', m, left) <- runScanWaitList subst p e' waitlist
-  return (p', cata (resolvePlaceholders m) e'', left)
+  return (p', p, cata (resolvePlaceholders m) e'', left)
 
 resolvePlaceholders :: PSubst -> T.ExprF T.Expr -> T.Expr
 resolvePlaceholders s (T.PlaceholderF i) = s IntMap.! i
