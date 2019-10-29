@@ -34,7 +34,7 @@ initEnv = Env initContext initKindEnv initTypeEnv
 data Candidate
   = Candidate { _id_   :: Int
               , _name  :: S.Name
-              , _type_ :: TypeScheme }
+              , _type_ :: PredType }
 
 makeLenses ''Candidate
 

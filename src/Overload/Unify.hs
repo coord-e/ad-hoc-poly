@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Overload.Unify where
 
+import           Overload.Env
 import           Overload.Subst
 import           Overload.Type
 import           Reporting.Error
@@ -8,9 +9,17 @@ import           Reporting.Error.Type
 
 import           Control.Eff
 import           Control.Eff.Exception
-import           Control.Monad.Extra   (fromMaybeM)
-import qualified Data.Set              as Set
-import           Safe.Exact            (zipExactMay)
+import           Control.Eff.State.Strict
+import           Control.Monad.Extra      (fromMaybeM)
+import qualified Data.Set                 as Set
+import           Safe.Exact               (zipExactMay)
+
+
+unify :: Member (State Constraints) r => Type -> Type -> Eff r ()
+unify t1 t2 = modify ((t1, t2):)
+
+unifyP :: Member (State Constraints) r => PredType -> PredType -> Eff r PredType
+unifyP (PredType cs1 t1) (PredType cs2 t2) = unify t1 t2 >> return (PredType (cs1 ++ cs2) t1)
 
 
 solve :: Member (Exc Error) r => [(Type, Type)] -> Eff r Subst
