@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Overload.KindInfer where
 
-import           AST.Source
+import qualified AST.Source                as S
 import           Overload.Env
 import           Overload.Kind
 import           Reporting.Error
@@ -16,16 +16,16 @@ import           Control.Monad.Extra       (fromMaybeM)
 import qualified Data.Map                  as Map
 
 
-kind :: (Member (Reader Env) r, Member (Exc Error) r) => Type -> Eff r Kind
-kind (TVar _) = return Star
-kind (TName n) = fromMaybeM (throwKindError $ UnboundName n) $ reader (Map.lookup n . view kindEnv)
-kind (TFun t1 t2) = do
+kind :: (Member (Reader Env) r, Member (Exc Error) r) => S.Type -> Eff r Kind
+kind (S.TVar _) = return Star
+kind (S.TName n) = fromMaybeM (throwKindError $ UnboundName n) $ reader (Map.lookup n . view kindEnv)
+kind (S.TFun t1 t2) = do
   k1 <- kind t1
   k2 <- kind t2
   unify Star k1
   unify Star k2
   return Star
-kind (TApp t1 t2) = do
+kind (S.TApp t1 t2) = do
   k1 <- kind t1
   k2 <- kind t2
   case k1 of
@@ -34,12 +34,12 @@ kind (TApp t1 t2) = do
       unify Star k2
       return b
     k -> throwKindError $ UnableToApply k k2
-kind (TLam x t) = Arrow Star <$> local (over kindEnv $ Map.insert x Star) (kind t)
-kind (TTuple ts) = mapM_ (unify Star <=< kind) ts >> return Star
-kind (TConstraint _ (Forall _ t)) = (unify Star =<< kind t) >> return Constraint
-kind (TPredicate t1 t2) = (unify Constraint =<< kind t1) >> kind t2
+kind (S.TLam x t) = Arrow Star <$> local (over kindEnv $ Map.insert x Star) (kind t)
+kind (S.TTuple ts) = mapM_ (unify Star <=< kind) ts >> return Star
+kind (S.TConstraint _ (S.Forall _ t)) = (unify Star =<< kind t) >> return Constraint
+kind (S.TPredicate t1 t2) = (unify Constraint =<< kind t1) >> kind t2
 
-kindTo :: (Member (Reader Env) r, Member (Exc Error) r) => Type -> Kind -> Eff r ()
+kindTo :: (Member (Reader Env) r, Member (Exc Error) r) => S.Type -> Kind -> Eff r ()
 kindTo t k = unify k =<< kind t
 
 
