@@ -23,11 +23,13 @@ data LiteralTypes
                  , char    :: TypeScheme
                  , boolean :: TypeScheme
                  , string  :: TypeScheme }
+  deriving Show
 
 data Config
   = Config { baseTypes    :: Map.Map String Kind
            , literalTypes :: LiteralTypes
            , bindings     :: Map.Map String TypeScheme }
+  deriving Show
 
 
 instance FromJSON TypeScheme where
