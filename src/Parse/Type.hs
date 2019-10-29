@@ -42,7 +42,11 @@ constraint = do
 
 typeScheme :: Parser TypeScheme
 typeScheme = do
-  symbol "∀"
-  xs <- some tvarName
-  symbol "."
+  xs <- qual <|> pure []
   Forall xs <$> type_
+  where
+    qual = do
+      symbol "∀"
+      xs <- some tvarName
+      symbol "."
+      return xs
