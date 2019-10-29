@@ -83,3 +83,9 @@ runSchemeEval :: (Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff 
 runSchemeEval (S.Forall as t) = do
   as' <- mapM (const freshv) as
   SForall as' <$> runEvalWithVars (Map.fromList $ zip as as') t
+
+runSchemeEvalToType :: (Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff r TypeScheme
+runSchemeEvalToType = fmap extract . runSchemeEval
+  where
+    extract (SForall as (PredSem cs (SType t))) = Forall as (PredType cs t)
+    extract _               = error "something went wrong in kinding"

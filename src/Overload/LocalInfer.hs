@@ -5,13 +5,15 @@ module Overload.LocalInfer where
 
 import qualified AST.Source                as S
 import qualified AST.Target                as T
+import           Config                    (LiteralTypes (..))
 import           Overload.Env
 import {-# SOURCE #-} Overload.GlobalInfer
 import           Overload.Instance
 import qualified Overload.Kind             as K
 import           Overload.KindInfer        (kind, kindTo)
 import           Overload.Type
-import           Overload.TypeEval         (runEval, runSchemeEval)
+import           Overload.TypeEval         (runEval, runSchemeEval,
+                                            runSchemeEvalToType)
 import           Overload.Unify
 import           Overload.Var
 import           Reporting.Error
@@ -31,9 +33,9 @@ import qualified Data.Map                  as Map
 
 
 localInfer :: S.Expr -> Eff '[Writer Candidate, Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr)
-localInfer (S.Int i)    = return (predt TInt, T.Int i)
-localInfer (S.Char c)   = return (predt TChar, T.Char c)
-localInfer (S.Str s)    = return (predt TStr, T.Str s)
+localInfer (S.Int i)    = (, T.Int i) <$> literalType integer
+localInfer (S.Char c)   = (, T.Char c) <$> literalType char
+localInfer (S.Str s)    = (, T.Str s) <$> literalType string
 localInfer (S.Tuple xs) = bimap (overpred TTuple) T.Tuple . unzip <$> mapM localInfer xs
 localInfer (S.Lam x e)  = do
   tv <- TVar <$> freshv
@@ -113,6 +115,14 @@ withBinding x t e = local (over (context . bindings) (Map.insert x (t, e)))
 
 withOverload :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
 withOverload x t = local (over (context . overloads) (Map.insert x t))
+
+literalType :: (Member (Exc Error) r, Member (Reader Env) r, Member Fresh r) => (LiteralTypes -> S.TypeScheme) -> Eff r PredType
+literalType f = do
+  -- TODO: it is inefficient to evalutate S.TypeScheme at every literals' occurence
+  s@(S.Forall _ t) <- f <$> reader (view literalTypes)
+  kindTo t K.Star
+  s' <- runSchemeEvalToType s
+  instantiate s'
 
 scheme :: PredType -> TypeScheme
 scheme = Forall []

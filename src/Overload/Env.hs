@@ -2,6 +2,7 @@
 module Overload.Env where
 
 import qualified AST.Source      as S
+import           Config
 import           Overload.Kind
 import           Overload.Type
 
@@ -21,14 +22,12 @@ initContext = Context Map.empty Map.empty Map.empty
 
 
 data Env
-  = Env { _context :: Context
-        , _kindEnv :: KindEnv
-        , _typeEnv :: TypeEnv }
+  = Env { _context      :: Context
+        , _kindEnv      :: KindEnv
+        , _typeEnv      :: TypeEnv
+        , _literalTypes :: LiteralTypes }
 
 makeLenses ''Env
-
-initEnv :: Env
-initEnv = Env initContext initKindEnv initTypeEnv
 
 
 data Candidate

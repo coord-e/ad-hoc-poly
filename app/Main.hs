@@ -8,7 +8,8 @@ import           Reporting.Report   (printReport)
 import           Reporting.Result   (Result)
 
 import           Control.Monad      ((<=<))
-import           Data.Text          as T
+import           Data.Text          hiding (head)
+import qualified Data.Text.IO       as T
 import           System.Environment (getArgs)
 
 
@@ -20,6 +21,6 @@ main = do
   args <- getArgs
   content <- T.readFile $ head args
   config <- loadDefaultConfigFile
-  case transpile config content of
+  case config >>= flip transpile content of
     Right output -> putStrLn output
     Left err     -> printReport err
