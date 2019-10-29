@@ -31,9 +31,10 @@ makeLenses ''Env
 
 
 data Candidate
-  = Candidate { _id_   :: Int
-              , _name  :: S.Name
-              , _type_ :: PredType }
+  = Candidate { _id_          :: Int
+              , _name         :: S.Name
+              , _type_        :: PredType
+              , _savedContext :: Context }
 
 makeLenses ''Candidate
 

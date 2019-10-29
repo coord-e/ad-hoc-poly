@@ -60,7 +60,8 @@ localInfer (S.Var x) = maybeM (maybeM (throwError $ TypeError $ UnboundVariable 
     inferVarOver s = do
       p <- instantiate s
       i <- fresh
-      tell $ Candidate i x p
+      c <- reader (view context)
+      tell $ Candidate i x p c
       return (p, T.Placeholder i)
 localInfer (S.Type x t e) = do
   k <- kind t

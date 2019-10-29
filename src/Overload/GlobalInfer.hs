@@ -18,6 +18,7 @@ import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
 import           Control.Eff.State.Strict
 import           Control.Eff.Writer.Strict
+import           Control.Lens
 import           Data.Functor.Foldable
 import qualified Data.IntMap               as IntMap
 
@@ -28,12 +29,12 @@ type PSubst = IntMap.IntMap T.Expr
 -- TODO: implement without primitive recursion
 scanWaitList :: Subst -> WaitList -> (PredType, T.Expr, PSubst) -> Eff '[Writer S.Name, Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr, PSubst)
 scanWaitList _ [] acc = return acc
-scanWaitList s (Candidate i x p:wl) (ap, ae, m) = do
-  inst <- findInstantiation x . scheme $ apply s p
+scanWaitList s (Candidate i x p c:wl) (ap, ae, m) = do
+  inst <- local (set context c) $ findInstantiation x . scheme $ apply s p
   case inst of
     Just (_, e) -> do
       -- TODO: can unification made here be ignored in the scan?
-      (_, e', wl') <- raise $ runLocalInfer e
+      (_, e', wl') <- raise $ local (set context c) $ runLocalInfer e
       scanWaitList s (wl ++ wl') (ap, ae, IntMap.insert i e' m)
     Nothing -> do
       n <- freshn x
