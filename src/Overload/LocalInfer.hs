@@ -46,9 +46,11 @@ localInfer (S.Var x) = maybeM (maybeM (throwError $ TypeError $ UnboundVariable 
   where
     bound = reader (views (context . bindings) (Map.lookup x))
     overload = reader (views (context . overloads) (Map.lookup x))
+    -- NOTE: guard to avoid infinity loop
+    inferVarBound (s, S.Var x') | x == x' = (, T.Var x) <$> instantiate s
     inferVarBound (s, e) = do
       p <- instantiate s
-      (p', e') <- localInfer e  -- TODO: infinity loop
+      (p', e') <- localInfer e
       (, e') <$> unifyP p p'
     inferVarOver s = do
       p <- instantiate s
