@@ -1,19 +1,20 @@
 {-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Config where
 
 import           AST.Source
-import qualified Parse.Internal         as P (Parser)
-import           Parse.Kind             (kind)
-import           Parse.Type             (typeScheme)
+import qualified Parse.Internal   as P (Parser)
+import           Parse.Kind       (kind)
+import           Parse.Type       (typeScheme)
 import           Reporting.Error
-import           Reporting.Error.Config
 
-import           Data.Aeson.Types       (typeMismatch)
-import qualified Data.Map               as Map
+import           Data.Aeson.Types (typeMismatch)
+import           Data.Bifunctor
+import qualified Data.Map         as Map
 import           Data.Text
 import           Data.Yaml
-import           Text.Megaparsec        (errorBundlePretty, parse)
+import           Text.Megaparsec  (errorBundlePretty, parse)
 
 
 data LiteralTypes
@@ -60,3 +61,10 @@ parseAndBundle p input =
   case parse p "" input of
     Left err -> fail $ errorBundlePretty err
     Right s  -> return s
+
+
+loadConfigFile :: String -> IO (Either Error Config)
+loadConfigFile path = first (ConfigError . prettyPrintParseException) <$> decodeFileEither path
+
+loadDefaultConfigFile :: IO (Either Error Config)
+loadDefaultConfigFile = loadConfigFile "env.yaml"
