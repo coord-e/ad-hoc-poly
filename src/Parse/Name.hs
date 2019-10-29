@@ -10,7 +10,7 @@ exprReserved :: [String]
 exprReserved = ["let", "in", "type", "over", "satisfy"]
 
 typeReserved :: [String]
-typeReserved = ["constraint"]
+typeReserved = ["constraint", "in"]
 
 makeIdentifier :: [String] -> Parser String
 makeIdentifier rws = (lexeme . try) (ident >>= check)
