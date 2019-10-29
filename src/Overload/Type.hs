@@ -19,9 +19,7 @@ newtype TyVar = TV Int deriving (Show, Eq, Ord)
 
 -- normalized type (Star kind)
 data Type
-  = TInt
-  | TChar
-  | TStr
+  = TBase String
   | TVar TyVar
   | TFun Type Type
   | TTuple [Type]

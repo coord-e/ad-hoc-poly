@@ -32,14 +32,12 @@ solve ((t1, t2) : cs) = do
   compose s <$> solve (apply s cs)
 
 unifies :: Member (Exc Error) r => Type -> Type -> Eff r Subst
-unifies TInt TInt                       = return nullSubst
-unifies TChar TChar                     = return nullSubst
-unifies TStr TStr                       = return nullSubst
-unifies t1@(TFun a1 b1) t2@(TFun a2 b2) = fromMaybeM (throwUniFail t1 t2) $ unifiesMany [a1, b1] [a2, b2]
-unifies t1@(TTuple ts) t2@(TTuple ts')  = fromMaybeM (throwUniFail t1 t2) $ unifiesMany ts ts'
-unifies (TVar v) t                      = bind v t
-unifies t (TVar v)                      = bind v t
-unifies t1 t2                           = throwUniFail t1 t2
+unifies (TBase n1) (TBase n2) | n1 == n2 = return nullSubst
+unifies t1@(TFun a1 b1) t2@(TFun a2 b2)  = fromMaybeM (throwUniFail t1 t2) $ unifiesMany [a1, b1] [a2, b2]
+unifies t1@(TTuple ts) t2@(TTuple ts')   = fromMaybeM (throwUniFail t1 t2) $ unifiesMany ts ts'
+unifies (TVar v) t                       = bind v t
+unifies t (TVar v)                       = bind v t
+unifies t1 t2                            = throwUniFail t1 t2
 
 unifiesMany :: Member (Exc Error) r => [Type] -> [Type] -> Eff r (Maybe Subst)
 unifiesMany ts1 ts2 = mapM solve (zipExactMay ts1 ts2)

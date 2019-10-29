@@ -35,9 +35,7 @@ instance Substitutable Type where
   ftv = cata go
     where
       go (TVarF v)     = Set.singleton v
-      go TIntF         = Set.empty
-      go TCharF        = Set.empty
-      go TStrF         = Set.empty
+      go (TBaseF _)    = Set.empty
       go (TFunF s1 s2) = s1 `Set.union` s2
       go (TTupleF ss)  = foldr Set.union Set.empty ss
 
