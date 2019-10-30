@@ -8,3 +8,7 @@ class Report a where
 
 printReport :: Report a => a -> IO ()
 printReport = hPutStrLn stderr . report
+
+
+paren :: String -> String
+paren s = "(" ++ s ++ ")"

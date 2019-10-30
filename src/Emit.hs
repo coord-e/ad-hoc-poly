@@ -3,12 +3,11 @@ module Emit where
 import           AST.Target
 import           Data.Functor.Foldable
 import           Data.List
+import           Reporting.Report      (paren)
+
 
 emit :: Expr -> String
 emit = cata emit'
-
-paren :: String -> String
-paren s = "(" ++ s ++ ")"
 
 emit' :: ExprF String -> String
 emit' (IntF i)       = show i

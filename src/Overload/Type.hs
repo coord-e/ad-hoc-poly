@@ -8,9 +8,12 @@
 module Overload.Type where
 
 import qualified AST.Source               as S
+import           Reporting.Report
 
 import           Control.Lens.TH
+import           Data.Functor.Foldable
 import           Data.Functor.Foldable.TH
+import           Data.List                (intercalate)
 import qualified Data.Map                 as Map
 
 
@@ -73,3 +76,25 @@ data SemScheme
 
 makeLenses ''SemScheme
 makeLenses ''PredSem
+
+
+-- Report instances
+instance Report TyVar where
+  report (TV n) = "'v" ++ show n
+
+instance Report Type where
+  report = cata go
+    where
+      go (TBaseF n)    = n
+      go (TVarF v)     = report v
+      go (TFunF t1 t2) = paren t1 ++ " -> " ++ t2
+      go (TTupleF ts)  = paren (intercalate ", " ts)
+
+instance Report Constraint where
+  report (Constraint n s) = "constraint " ++ n ++ " " ++ paren (report s)
+
+instance Report PredType where
+  report (PredType cs t) = paren (intercalate ", " $ map report cs) ++ " => " ++ report t
+
+instance Report TypeScheme where
+  report (Forall as p) = "∀" ++ (unwords $ map report as) ++ ". " ++ report p
