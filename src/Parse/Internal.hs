@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Parse.Internal where
 
+import           Data.Char                  (isAlphaNum)
 import           Data.Functor
 import           Data.Text                  hiding (empty)
 import           Data.Void
@@ -27,7 +28,11 @@ lexeme :: Parser a -> Parser a
 lexeme = L.lexeme space
 
 ident :: Parser String
-ident = lexeme $ (:) <$> C.letterChar <*> many C.alphaNumChar
+ident = lexeme $ (:) <$> C.letterChar <*> many (satisfy isIdentChar)
+  where
+    isIdentChar '_'  = True
+    isIdentChar '\'' = True
+    isIdentChar c    = isAlphaNum c
 
 rword :: Text -> Parser ()
 rword w = (lexeme . try) (C.string w *> notFollowedBy C.alphaNumChar)
