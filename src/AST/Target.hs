@@ -14,6 +14,8 @@ data Expr
   = Int Int
   | Char Char
   | Str String
+  | Real Double
+  | Bool Bool
   | Var Name
   | App Expr Expr
   | Lam Name Expr

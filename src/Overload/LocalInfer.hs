@@ -36,6 +36,8 @@ localInfer :: S.Expr -> Eff '[Writer Candidate, Fresh, Reader Env, State Constra
 localInfer (S.Int i)    = (, T.Int i) <$> literalType integer
 localInfer (S.Char c)   = (, T.Char c) <$> literalType char
 localInfer (S.Str s)    = (, T.Str s) <$> literalType string
+localInfer (S.Real f)   = (, T.Real f) <$> literalType real
+localInfer (S.Bool b)   = (, T.Bool b) <$> literalType boolean
 localInfer (S.Tuple xs) = bimap (overpred TTuple) T.Tuple . unzip <$> mapM localInfer xs
 localInfer (S.Lam x e)  = do
   tv <- TVar <$> freshv
