@@ -9,6 +9,7 @@ import           Overload.LocalInfer
 import           Overload.Subst
 import           Overload.Type
 import           Overload.Unify
+import           Overload.Var
 import           Reporting.Error
 
 import           Control.Eff
@@ -49,12 +50,14 @@ runScanWaitList s p e wl = do
   ((p', e', m), left) <- runListWriter $ scanWaitList s wl (p, e, IntMap.empty)
   return (p', e', m, left)
 
-globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, PredType, T.Expr, [S.Name])
+globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (TypeScheme, TypeScheme, T.Expr, [S.Name])
 globalInfer e = do
   (p, e', waitlist) <- runLocalInfer e
   subst <- solve =<< get  -- TODO: save this solve and use later?
   (p', e'', m, left) <- runScanWaitList subst p e' waitlist
-  return (p', p, cata (resolvePlaceholders m) e'', left)
+  s' <- generalize $ apply subst p'
+  s <- generalize $ apply subst p
+  return (s', s, cata (resolvePlaceholders m) e'', left)
 
 resolvePlaceholders :: PSubst -> T.ExprF T.Expr -> T.Expr
 resolvePlaceholders s (T.PlaceholderF i) = s IntMap.! i
