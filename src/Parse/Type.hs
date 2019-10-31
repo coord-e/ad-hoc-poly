@@ -38,7 +38,7 @@ lambda = do
 
 constraint :: Parser Type
 constraint = do
-  rword "constraint"
+  rword_ "constraint"
   x <- name
   TConstraint x <$> typeScheme
 

@@ -8,7 +8,7 @@ import           Text.Megaparsec
 
 
 exprReserved :: [String]
-exprReserved = ["let", "in", "type", "over", "satisfy"]
+exprReserved = ["let", "in", "type", "over", "satisfy", "true", "false"]
 
 typeReserved :: [String]
 typeReserved = ["constraint", "in"]

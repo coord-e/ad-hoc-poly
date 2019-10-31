@@ -15,6 +15,12 @@ import qualified Text.Megaparsec.Char.Lexer     as L
 integer :: Parser Int
 integer = lexeme L.decimal
 
+real :: Parser Double
+real = try $ lexeme L.float
+
+bool :: Parser Bool
+bool = (== "true") <$> choice [ rword "true", rword "false" ]
+
 quotedChar :: Parser Char
 quotedChar = between (symbol "'") (symbol "'") C.printChar
 
@@ -29,7 +35,9 @@ term = try (parens expr)
   <|> over
   <|> satisfy
   <|> lambda
+  <|> Bool <$> bool
   <|> Var <$> name
+  <|> Real <$> real
   <|> Int <$> integer
   <|> Char <$> quotedChar
   <|> Str <$> quotedString
@@ -53,34 +61,34 @@ lambda = do
 
 let_ :: Parser Expr
 let_ = do
-  rword "let"
+  rword_ "let"
   x <- name
   symbol "="
   e1 <- expr
-  rword "in"
+  rword_ "in"
   Let x e1 <$> expr
 
 typedef :: Parser Expr
 typedef = do
-  rword "type"
+  rword_ "type"
   x <- typeName
   symbol "="
   t <- type_
-  rword "in"
+  rword_ "in"
   Type x t <$> expr
 
 over :: Parser Expr
 over = do
-  rword "over"
+  rword_ "over"
   s <- typeScheme
-  rword "in"
+  rword_ "in"
   Over s <$> expr
 
 satisfy :: Parser Expr
 satisfy = do
-  rword "satisfy"
+  rword_ "satisfy"
   s <- typeScheme
   symbol "="
   e <- expr
-  rword "in"
+  rword_ "in"
   Satisfy s e <$> expr

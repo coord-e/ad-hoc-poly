@@ -34,5 +34,8 @@ ident = lexeme $ (:) <$> C.letterChar <*> many (satisfy isIdentChar)
     isIdentChar '\'' = True
     isIdentChar c    = isAlphaNum c
 
-rword :: Text -> Parser ()
-rword w = (lexeme . try) (C.string w *> notFollowedBy C.alphaNumChar)
+rword :: Text -> Parser Text
+rword w = (lexeme . try) (C.string w <* notFollowedBy C.alphaNumChar)
+
+rword_ :: Text -> Parser ()
+rword_ = void . rword
