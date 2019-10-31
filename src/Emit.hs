@@ -9,16 +9,16 @@ import           Data.List
 
 
 emit :: Expr -> String
-emit = cata emit'
-
-emit' :: ExprF String -> String
-emit' (IntF i)       = show i
-emit' (CharF c)      = show c
-emit' (StrF s)       = show s
-emit' (RealF f)      = show f
-emit' (BoolF b)      = bool "false" "true" b
-emit' (VarF n)       = n
-emit' (AppF e1 e2)   = e1 ++ " " ++ paren e2
-emit' (LamF n e)     = paren ("fun " ++ n ++ " -> " ++ e)
-emit' (TupleF es)    = paren $ intercalate ", " es
-emit' (LetF n e1 e2) = "let " ++ n ++ " = " ++ e1 ++ " in\n" ++ e2
+emit = cata go
+  where
+    go (IntF i)         = show i
+    go (CharF c)        = show c
+    go (StrF s)         = show s
+    go (RealF f)        = show f
+    go (BoolF b)        = bool "false" "true" b
+    go (VarF n)         = n
+    go (AppF e1 e2)     = e1 ++ " " ++ paren e2
+    go (LamF n e)       = paren ("fun " ++ n ++ " -> " ++ e)
+    go (TupleF es)      = paren $ intercalate ", " es
+    go (LetF n e1 e2)   = "let " ++ n ++ " = " ++ e1 ++ " in\n" ++ e2
+    go (PlaceholderF _) = error "placeholder is left in emit"
