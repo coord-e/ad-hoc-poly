@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TupleSections    #-}
 module Overload.Unify where
 
 import           Overload.Env
@@ -55,5 +56,11 @@ throwUniFail :: Member (Exc Error) r => Type -> Type -> Eff r a
 throwUniFail t1 t2 = throwError . TypeError $ UnificationFail t1 t2
 
 
-unifyAndSolve :: Type -> Type -> Either Error Subst
-unifyAndSolve t1 t2 = run . runError $ unifies t1 t2
+unifyAndSolve :: Member (Exc Error) r => Type -> Type -> Eff r Subst
+unifyAndSolve = unifies
+
+unifyAndSolveP :: Member (Exc Error) r => PredType -> PredType -> Eff r (PredType, Subst)
+unifyAndSolveP (PredType cs1 t1) (PredType cs2 t2) = (PredType (cs1 ++ cs2) t1,) <$> unifyAndSolve t1 t2
+
+runUnifyAndSolve :: Type -> Type -> Either Error Subst
+runUnifyAndSolve t1 t2 = run . runError $ unifyAndSolve t1 t2
