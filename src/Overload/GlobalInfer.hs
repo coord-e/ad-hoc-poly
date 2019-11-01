@@ -59,8 +59,11 @@ globalInfer e = do
   (p', e'', m, left) <- runScanWaitList subst p e' waitlist
   s' <- generalize $ apply subst p'
   s <- generalize $ apply subst p
-  return (s', s, cata (resolvePlaceholders m) e'', left)
+  return (s', s, resolvePlaceholders m e'', left)
 
-resolvePlaceholders :: PSubst -> T.ExprF T.Expr -> T.Expr
-resolvePlaceholders s (T.PlaceholderF i) = s IntMap.! i
-resolvePlaceholders _ e                  = embed e
+resolvePlaceholders :: PSubst -> T.Expr -> T.Expr
+resolvePlaceholders s = cata go
+  where
+    go :: T.ExprF T.Expr -> T.Expr
+    go (T.PlaceholderF i) = cata go $ s IntMap.! i
+    go e                  = embed e
