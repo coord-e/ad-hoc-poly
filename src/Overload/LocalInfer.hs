@@ -75,7 +75,7 @@ localInfer (S.Over s e) = do
 localInfer (S.Satisfy sc e1 e2) = do
   (x, sc') <- extractConstraint sc
   (s1, sraw, e1', left) <- raise $ globalInfer e1
-  unlessM (sraw `isInstance` sc') (throwError . TypeError $ UnableToInstantiate x s1 sc')
+  unlessM (sraw `isInstance` sc') (throwError . TypeError $ UnableToInstantiate x sraw sc')
   -- TODO: check overlapping instances
   n <- freshn x
   let inst = (sc', applyLeft n left)
