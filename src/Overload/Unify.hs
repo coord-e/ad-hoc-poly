@@ -31,6 +31,7 @@ solve ((t1, t2) : cs) = do
   s <- unifies t1 t2
   compose s <$> solve (apply s cs)
 
+-- NOTE: left-biased
 unifies :: Member (Exc Error) r => Type -> Type -> Eff r Subst
 unifies (TBase n1) (TBase n2) | n1 == n2 = return nullSubst
 unifies t1@(TFun a1 b1) t2@(TFun a2 b2)  = fromMaybeM (throwUniFail t1 t2) $ unifiesMany [a1, b1] [a2, b2]
@@ -52,3 +53,7 @@ occursIn a t = a `Set.member` ftv t
 
 throwUniFail :: Member (Exc Error) r => Type -> Type -> Eff r a
 throwUniFail t1 t2 = throwError . TypeError $ UnificationFail t1 t2
+
+
+unifyAndSolve :: Type -> Type -> Either Error Subst
+unifyAndSolve t1 t2 = run . runError $ unifies t1 t2
