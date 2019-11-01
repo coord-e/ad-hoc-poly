@@ -40,6 +40,7 @@ constraint :: Parser Type
 constraint = do
   rword_ "constraint"
   x <- name
+  symbol "::"
   TConstraint x <$> typeScheme
 
 typeSchemeBase :: Parser TypeScheme

@@ -79,14 +79,14 @@ typedef = do
 
 over :: Parser Expr
 over = do
-  rword_ "over"
+  rword_ "overload"
   s <- typeScheme
   rword_ "in"
   Over s <$> expr
 
 satisfy :: Parser Expr
 satisfy = do
-  rword_ "satisfy"
+  rword_ "instance"
   s <- typeScheme
   symbol "="
   e <- expr
