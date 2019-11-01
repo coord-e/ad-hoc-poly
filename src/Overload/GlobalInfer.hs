@@ -34,7 +34,6 @@ scanWaitList s (Candidate i x p ctx:wl) (acs, aty, ae, m) = do
   inst <- local (set context ctx) . findInstantiation x . scheme $ apply s p
   case inst of
     Just (_, e) -> do
-      -- TODO: can unification made here be ignored in the scan?
       (p', e', wl') <- raise . local (set context ctx) $ runLocalInfer e
       _ <- unifyP p p'
       subst <- solve =<< get  -- TODO: save this solve and use later?
