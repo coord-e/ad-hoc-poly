@@ -31,12 +31,14 @@ type PSubst = IntMap.IntMap T.Expr
 scanWaitList :: Subst -> WaitList -> (PredType, T.Expr, PSubst) -> Eff '[Writer S.Name, Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr, PSubst)
 scanWaitList _ [] acc = return acc
 scanWaitList s (Candidate i x p c:wl) (ap, ae, m) = do
-  inst <- local (set context c) $ findInstantiation x . scheme $ apply s p
+  inst <- local (set context c) . findInstantiation x . scheme $ apply s p
   case inst of
     Just (_, e) -> do
       -- TODO: can unification made here be ignored in the scan?
-      (_, e', wl') <- raise $ local (set context c) $ runLocalInfer e
-      scanWaitList s (wl ++ wl') (ap, ae, IntMap.insert i e' m)
+      (p', e', wl') <- raise . local (set context c) $ runLocalInfer e
+      _ <- unifyP p p'
+      subst <- solve =<< get  -- TODO: save this solve and use later?
+      scanWaitList subst (wl ++ wl') (ap, ae, IntMap.insert i e' m)
     Nothing -> do
       n <- freshn x
       tell x
