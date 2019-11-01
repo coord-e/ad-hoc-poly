@@ -11,7 +11,7 @@ import           Control.Eff
 import           Control.Eff.Reader.Strict
 import           Control.Lens
 import           Control.Monad             (join)
-import           Control.Monad.Extra       (allM, findM)
+import           Control.Monad.Extra       (allM, anyM, findM)
 import           Data.Either.Extra         (eitherToMaybe)
 import qualified Data.Map                  as Map
 import           Data.Maybe                (isJust)
@@ -41,6 +41,11 @@ canBeEliminated (Constraint x s) = (||) <$> bound <*> inst
   where
     bound = maybe False (views _1 (== s)) <$> reader (views (context . bindings) $ Map.lookup x)
     inst = isJust <$> findInstantiation x s
+
+isOverlapping :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r Bool
+isOverlapping x s = maybe (return False) (anyM check) =<< reader (views (context . instantiations) $ Map.lookup x)
+  where
+    check (s', _) = (||) <$> isInstance s s' <*> isInstance s' s
 
 
 toMaybe :: Bool -> a -> Maybe a

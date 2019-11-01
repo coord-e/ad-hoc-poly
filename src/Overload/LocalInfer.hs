@@ -27,7 +27,7 @@ import           Control.Eff.Reader.Strict
 import           Control.Eff.State.Strict
 import           Control.Eff.Writer.Strict
 import           Control.Lens
-import           Control.Monad.Extra       (maybeM, unlessM)
+import           Control.Monad.Extra       (maybeM, unlessM, whenM)
 import           Data.Bifunctor
 import qualified Data.Map                  as Map
 
@@ -74,9 +74,9 @@ localInfer (S.Over s e) = do
   withOverload x s' $ localInfer e
 localInfer (S.Satisfy sc e1 e2) = do
   (x, sc') <- extractConstraint sc
+  whenM (isOverlapping x sc') (throwError . TypeError $ OverlappingInstance x sc')
   (s1, sraw, e1', left) <- raise $ globalInfer e1
   unlessM (sraw `isInstance` sc') (throwError . TypeError $ UnableToInstantiate x sraw sc')
-  -- TODO: check overlapping instances
   n <- freshn x
   let inst = (sc', applyLeft n left)
   (p2, e2') <- withInstance x inst $ withBinding n s1 (S.Var n) $ localInfer e2
