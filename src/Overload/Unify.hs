@@ -27,10 +27,12 @@ runSolve :: [(Type, Type)] -> Either Error Subst
 runSolve cs = run . runError $ solve cs
 
 solve :: Member (Exc Error) r => [(Type, Type)] -> Eff r Subst
-solve [] = return nullSubst
-solve ((t1, t2) : cs) = do
-  s <- unifies t1 t2
-  compose s <$> solve (apply s cs)
+solve cs = solve' (nullSubst, cs)
+  where
+    solve' (su, []) = return su
+    solve' (su, (t1, t2) : cs) = do
+      s <- unifies t1 t2
+      solve' (s `compose` su, apply s cs)
 
 -- NOTE: left-biased
 unifies :: Member (Exc Error) r => Type -> Type -> Eff r Subst
