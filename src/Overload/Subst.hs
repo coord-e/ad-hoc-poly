@@ -2,6 +2,7 @@ module Overload.Subst where
 
 import           Overload.Env          (Context (..))
 import           Overload.Type
+import           Reporting.Report
 
 import           Control.Exception     (assert)
 import           Control.Lens          hiding (Context)
@@ -75,3 +76,10 @@ instance (Substitutable a, Substitutable b) => Substitutable (a, b) where
 instance Substitutable a => Substitutable [a] where
   apply = map . apply
   ftv = foldr (Set.union . ftv) Set.empty
+
+
+-- Report instances
+instance Report Subst where
+  report (Subst m) = Map.foldrWithKey go "" m
+    where
+      go v t acc = acc ++ report v ++ " := " ++ report t ++ "\n"
