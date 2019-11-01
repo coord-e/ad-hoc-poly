@@ -31,7 +31,7 @@ tuple = TTuple <$> parens (type_ `sepEndBy` symbol ",")
 
 lambda :: Parser Type
 lambda = do
-  symbol "Λ"
+  symbol "Λ" <|> symbol "\\"
   x <- typeName
   symbol "."
   TLam x <$> type_
@@ -48,7 +48,7 @@ typeSchemeBase = do
   Forall xs <$> type_
   where
     qual = do
-      symbol "∀"
+      symbol "∀" <|> rword_ "forall"
       xs <- some tvarName
       symbol "."
       return xs

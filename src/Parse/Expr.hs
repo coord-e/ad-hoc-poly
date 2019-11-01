@@ -54,7 +54,7 @@ tuple = Tuple <$> parens (expr `sepEndBy` symbol ",")
 
 lambda :: Parser Expr
 lambda = do
-  symbol "λ"
+  symbol "λ" <|> symbol "\\"
   x <- name
   symbol "."
   Lam x <$> expr
