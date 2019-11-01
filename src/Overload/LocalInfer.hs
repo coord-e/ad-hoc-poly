@@ -142,8 +142,8 @@ overpred f = uncurry PredType . second f . foldr go ([], [])
   where
     go (PredType cs t) (acs, ats) = (acs ++ cs, t : ats)
 
-addpred :: Constraint -> PredType -> PredType
-addpred c (PredType cs t) = PredType (c:cs) t
+addpred :: [Constraint] -> PredType -> PredType
+addpred cs' (PredType cs t) = PredType (cs ++ cs') t
 
 freshn :: Member Fresh r => String -> Eff r T.Name
 freshn base = do
