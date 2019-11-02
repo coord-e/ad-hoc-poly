@@ -36,7 +36,7 @@ scanWaitList s (Candidate i x p ctx:wl) (acs, aty, ae, m) = do
     Just (_, e) -> do
       (p', e', wl') <- raise . local (set context ctx) $ runLocalInfer e
       _ <- unifyP p p'
-      subst <- solve =<< get  -- TODO: save this solve and use later?
+      subst <- getCurrentSubst
       scanWaitList subst (wl ++ wl') (acs, aty, ae, IntMap.insert i e' m)
     Nothing -> do
       n <- freshn x
@@ -53,7 +53,7 @@ runScanWaitList s (PredType cs t) e wl = do
 globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (TypeScheme, TypeScheme, T.Expr, [S.Name])
 globalInfer e = do
   (p, e', waitlist) <- runLocalInfer e
-  subst <- solve =<< get  -- TODO: save this solve and use later?
+  subst <- getCurrentSubst
   (cs, p', e'', m, left) <- runScanWaitList subst p e' waitlist
   s' <- generalize $ apply subst p'
   s <- generalize . apply subst $ addpred cs p

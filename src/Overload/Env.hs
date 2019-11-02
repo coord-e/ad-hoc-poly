@@ -1,14 +1,17 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Overload.Env where
 
-import qualified AST.Source       as S
+import qualified AST.Source        as S
 import           Config
 import           Overload.Kind
+import           Overload.Subst
 import           Overload.Type
 import           Reporting.Report
 
-import           Control.Lens.TH
-import qualified Data.Map         as Map
+import           Control.Exception (assert)
+import           Control.Lens      hiding (Context)
+import qualified Data.Map          as Map
+import qualified Data.Set          as Set
 
 
 data Context
@@ -42,7 +45,14 @@ makeLenses ''Candidate
 type WaitList = [Candidate]
 
 
-type Constraints = [(Type, Type)]
+data Constraints
+  = Constraints { _solved       :: Subst
+                , _unifications :: [(Type, Type)] }
+
+makeLenses ''Constraints
+
+initConstraints :: Constraints
+initConstraints = Constraints nullSubst []
 
 
 -- Report instances
@@ -53,3 +63,22 @@ instance Report Context where
       go2 = Map.foldrWithKey (\x is acc -> acc ++ foldr (folder x) "" is) ""
       folder x (s, e) acc = acc ++ x ++ " = " ++ report s ++ " ~> " ++ report e ++ "\n"
       go3 = Map.foldrWithKey (\x (s, e) acc -> acc ++ x ++ " = " ++ report s ++ " ~> " ++ report e ++ "\n") ""
+
+
+-- Substitutable instances
+instance Substitutable Context where
+  apply s (Context overs insts binds) = assert (go1 overs == overs) $
+                                        assert (go2 insts == insts) $
+                                        Context overs insts (go3 binds)
+    where
+      go1 = Map.map $ apply s
+      go2 = Map.map . map . over _1 $ apply s
+      go3 = Map.map . over _1 $ apply s
+
+  ftv (Context overs insts binds) = assert (go1 overs == Set.empty) $
+                                    assert (go2 insts == Set.empty) $
+                                    go3 binds
+    where
+      go1 = Map.foldr (Set.union . ftv) Set.empty
+      go2 = Map.foldr (Set.union . foldr (Set.union . views _1 ftv) Set.empty) Set.empty
+      go3 = Map.foldr (Set.union . views _1 ftv) Set.empty

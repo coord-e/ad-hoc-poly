@@ -11,6 +11,7 @@ import           Reporting.Error.Type
 import           Control.Eff
 import           Control.Eff.Exception
 import           Control.Eff.State.Strict
+import           Control.Lens
 import           Control.Monad.Extra      (fromMaybeM)
 import           Data.Foldable            (foldrM)
 import qualified Data.Set                 as Set
@@ -18,19 +19,27 @@ import           Safe.Exact               (zipExactMay)
 
 
 unify :: Member (State Constraints) r => Type -> Type -> Eff r ()
-unify t1 t2 = modify ((t1, t2):)
+unify t1 t2 = modify $ over unifications ((t1, t2):)
 
 unifyP :: Member (State Constraints) r => PredType -> PredType -> Eff r PredType
 unifyP (PredType cs1 t1) (PredType cs2 t2) = unify t1 t2 >> return (PredType (cs1 ++ cs2) t1)
 
 
-runSolve :: [(Type, Type)] -> Either Error Subst
+runSolve :: Constraints -> Either Error Subst
 runSolve cs = run . runError $ solve cs
 
-solve :: Member (Exc Error) r => [(Type, Type)] -> Eff r Subst
-solve = foldrM go nullSubst
+solve :: Member (Exc Error) r => Constraints -> Eff r Subst
+solve (Constraints subst cs) = foldrM go subst cs
   where
     go (t1, t2) su = flip compose su <$> unifies (apply su t1) (apply su t2)
+
+getCurrentSubst :: (Member (State Constraints) r, Member (Exc Error) r) => Eff r Subst
+getCurrentSubst = do
+  s <- solve =<< get
+  modify $ set unifications []
+  modify $ set solved s
+  return s
+
 
 -- NOTE: left-biased
 unifies :: Member (Exc Error) r => Type -> Type -> Eff r Subst
@@ -42,7 +51,7 @@ unifies t (TVar v)                       = bind v t
 unifies t1 t2                            = throwUniFail t1 t2
 
 unifiesMany :: Member (Exc Error) r => [Type] -> [Type] -> Eff r (Maybe Subst)
-unifiesMany ts1 ts2 = mapM solve (zipExactMay ts1 ts2)
+unifiesMany ts1 ts2 = mapM (solve . Constraints nullSubst) (zipExactMay ts1 ts2)
 
 bind :: Member (Exc Error) r => TyVar -> Type -> Eff r Subst
 bind v t | (TVar v) == t = return nullSubst
