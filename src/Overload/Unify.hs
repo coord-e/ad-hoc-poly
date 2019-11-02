@@ -12,6 +12,7 @@ import           Control.Eff
 import           Control.Eff.Exception
 import           Control.Eff.State.Strict
 import           Control.Monad.Extra      (fromMaybeM)
+import           Data.Foldable            (foldrM)
 import qualified Data.Set                 as Set
 import           Safe.Exact               (zipExactMay)
 
@@ -27,12 +28,9 @@ runSolve :: [(Type, Type)] -> Either Error Subst
 runSolve cs = run . runError $ solve cs
 
 solve :: Member (Exc Error) r => [(Type, Type)] -> Eff r Subst
-solve cs = solve' (nullSubst, cs)
+solve = foldrM go nullSubst
   where
-    solve' (su, []) = return su
-    solve' (su, (t1, t2) : cs) = do
-      s <- unifies t1 t2
-      solve' (s `compose` su, apply s cs)
+    go (t1, t2) su = flip compose su <$> unifies (apply su t1) (apply su t2)
 
 -- NOTE: left-biased
 unifies :: Member (Exc Error) r => Type -> Type -> Eff r Subst
