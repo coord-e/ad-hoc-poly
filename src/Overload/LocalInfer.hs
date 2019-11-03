@@ -118,10 +118,7 @@ withOverload :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff 
 withOverload x t = local (over (context . overloads) (Map.insert x t))
 
 adjustWithDefault :: Ord k => (a -> a) -> a -> k -> Map.Map k a -> Map.Map k a
-adjustWithDefault f def = Map.alter go
-  where
-    go (Just x) = Just (f x)
-    go Nothing  = Just def
+adjustWithDefault f def = Map.alter (Just . maybe def f)
 
 literalType :: (Member (Exc Error) r, Member (Reader Env) r, Member Fresh r) => (LiteralTypes -> S.TypeScheme) -> Eff r PredType
 literalType f = do
