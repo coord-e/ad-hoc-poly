@@ -54,7 +54,7 @@ unifiesMany :: Member (Exc Error) r => [Type] -> [Type] -> Eff r (Maybe Subst)
 unifiesMany ts1 ts2 = mapM (solve . Constraints nullSubst) (zipExactMay ts1 ts2)
 
 bind :: Member (Exc Error) r => TyVar -> Type -> Eff r Subst
-bind v t | (TVar v) == t = return nullSubst
+bind v t | TVar v == t   = return nullSubst
          | occursIn v t  = throwError . TypeError $ InfiniteType v t
          | otherwise     = return $ singleSubst v t
 

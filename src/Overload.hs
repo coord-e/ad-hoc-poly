@@ -32,14 +32,14 @@ compile (Config bases lits binds) e = do
   return e'
 
 
-mkInitEnv :: (Map.Map String S.Kind) -> LiteralTypes -> Env
+mkInitEnv :: Map.Map String S.Kind -> LiteralTypes -> Env
 mkInitEnv m = Env initContext kindenv typeenv
   where
     kindenv = Map.map evalKind m
     typeenv = Map.mapWithKey go m
     go k _ = PredSem [] . SType $ TBase k
 
-loadBindings :: (Member Fresh r, Member (Reader Env) r) => (Map.Map String S.TypeScheme) -> Eff r a -> Eff r a
+loadBindings :: (Member Fresh r, Member (Reader Env) r) => Map.Map String S.TypeScheme -> Eff r a -> Eff r a
 loadBindings = flip $ Map.foldrWithKey go
   where
     go x s e = do

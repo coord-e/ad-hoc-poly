@@ -97,4 +97,4 @@ instance Report PredType where
   report (PredType cs t) = paren (intercalate ", " $ map report cs) ++ " => " ++ report t
 
 instance Report TypeScheme where
-  report (Forall as p) = "∀" ++ (unwords $ map report as) ++ ". " ++ report p
+  report (Forall as p) = "∀" ++ unwords (map report as) ++ ". " ++ report p

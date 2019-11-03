@@ -34,7 +34,7 @@ eval (S.TName x)               = do
   return t
 eval (S.TVar x)                = SType . TVar <$> reader (flip (Map.!) x . view typeVars)
 eval (S.TTuple ts)             = SType . TTuple <$> mapM (fmap expectTy . eval) ts
-eval (S.TFun t1 t2)            = SType <$> (TFun <$> evalTy t1 <*> evalTy t2)
+eval (S.TFun t1 t2)            = fmap SType . TFun <$> evalTy t1 <*> evalTy t2
   where
     evalTy = fmap expectTy . eval
 eval (S.TPredicate c t)       = (tell =<< expectConstraint <$> eval c) >> eval t

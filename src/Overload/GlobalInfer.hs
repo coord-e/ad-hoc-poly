@@ -43,7 +43,7 @@ scanWaitList s (Candidate i x p ctx:wl) (acs, aty, ae, m) = do
       tell x
       let (PredType cs t) = p
       let c = Constraint x $ scheme p
-      scanWaitList s wl (c:cs++acs, (TFun t aty), T.Lam n ae, IntMap.insert i (T.Var n) m)
+      scanWaitList s wl (c:cs++acs, TFun t aty, T.Lam n ae, IntMap.insert i (T.Var n) m)
 
 runScanWaitList :: Subst -> PredType -> T.Expr -> WaitList -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] ([Constraint], PredType, T.Expr, PSubst, [S.Name])
 runScanWaitList s (PredType cs t) e wl = do

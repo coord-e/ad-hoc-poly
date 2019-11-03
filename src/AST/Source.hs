@@ -88,7 +88,7 @@ instance Report Type where
       go (TConstraintF x s)  = "constraint " ++ x ++ " " ++ paren (report s)
 
 instance Report TypeScheme where
-  report (Forall as t) = "∀" ++ (unwords $ map ('\'':) as) ++ ". " ++ report t
+  report (Forall as t) = "∀" ++ unwords (map ('\'':) as) ++ ". " ++ report t
 
 instance Report Expr where
   report = cata go
