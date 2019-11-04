@@ -43,7 +43,7 @@ localInfer (S.Bool b)   = (, T.Bool b) <$> literalType boolean
 localInfer (S.Tuple xs) = bimap TTuple T.Tuple . unzip <$> mapM localInfer xs
 localInfer (S.Lam x e)  = do
   tv <- TVar <$> freshv
-  (ret, e') <- withBinding x (scheme $ predt tv) (S.Var x) $ localInfer e
+  (ret, e') <- withBinding x (scheme $ predt tv) $ localInfer e
   return (TFun tv ret, T.Lam x e')
 localInfer (S.App e1 e2) = do
   tv <- TVar <$> freshv
@@ -55,7 +55,7 @@ localInfer (S.Var x) = maybeM (maybeM (throwError $ TypeError $ UnboundVariable 
   where
     bound = reader (views (context . bindings) (Map.lookup x))
     overload = reader (views (context . overloads) (Map.lookup x))
-    inferVarBound (s, _) = resolvePredicates (T.Var x) =<< instantiate s
+    inferVarBound s = resolvePredicates (T.Var x) =<< instantiate s
     inferVarOver s = do
       p <- instantiate s
       i <- fresh
@@ -76,13 +76,12 @@ localInfer (S.Satisfy sc e1 e2) = do
   unlessM (sc' `isInstance` sraw) (throwError . TypeError $ UnableToInstantiate x sraw sc')
   n <- freshn x
   let inst = (sc', applyLeft n left)
-  (t2, e2') <- withInstance x inst $ withBinding n s1 (S.Var n) $ localInfer e2
+  (t2, e2') <- withInstance x inst $ withBinding n s1 $ localInfer e2
   return (t2, T.Let n e1' e2')
 localInfer (S.Let x e1 e2) = do
   (s1, sraw, e1', left) <- raise $ globalInfer e1
-  n <- freshn x
-  (t2, e2') <- withBinding x sraw (applyLeft n left) . withBinding n s1 (S.Var n) $ localInfer e2
-  return (t2, T.Let n e1' e2')
+  (t2, e2') <- withBinding x sraw $ localInfer e2
+  return (t2, T.Let x e1' e2')
 
 runLocalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (Type, T.Expr, [Candidate])
 runLocalInfer e = do
@@ -120,8 +119,8 @@ applyLeft n = foldl ((. S.Var) . S.App) (S.Var n)
 withInstance :: Member (Reader Env) r => S.Name -> (TypeScheme, S.Expr) -> Eff r a -> Eff r a
 withInstance x i = local (over (context . instantiations) (adjustWithDefault (i:) [i] x))
 
-withBinding :: Member (Reader Env) r => S.Name -> TypeScheme -> S.Expr -> Eff r a -> Eff r a
-withBinding x t e = local (over (context . bindings) (Map.insert x (t, e)))
+withBinding :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
+withBinding x s = local (over (context . bindings) (Map.insert x s))
 
 withOverload :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
 withOverload x t = local (over (context . overloads) (Map.insert x t))

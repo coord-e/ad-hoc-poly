@@ -39,7 +39,7 @@ findInstantiation x s = fmap join . mapM (findM . views _1 $ isInstance s) =<< r
 canBeEliminated :: Member (Reader Env) r => Constraint -> Eff r Bool
 canBeEliminated (Constraint x s) = (||) <$> bound <*> inst
   where
-    bound = maybe False (views _1 (== s)) <$> reader (views (context . bindings) $ Map.lookup x)
+    bound = (== Just s) <$> reader (views (context . bindings) $ Map.lookup x)
     inst = isJust <$> findInstantiation x s
 
 isOverlapping :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r Bool
