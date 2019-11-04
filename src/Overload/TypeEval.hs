@@ -79,6 +79,12 @@ runEvalWithVars e t = do
 runEval :: (Member Fresh r, Member (Reader Env) r) => S.Type -> Eff r PredSem
 runEval = runEvalWithVars Map.empty
 
+runEvalToType :: (Member Fresh r, Member (Reader Env) r) => S.Type -> Eff r PredType
+runEvalToType = fmap extract . runEval
+  where
+    extract (PredSem cs (SType t)) = PredType cs t
+    extract _                      = error "something went wrong in kinding"
+
 runSchemeEval :: (Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff r SemScheme
 runSchemeEval (S.Forall as t) = do
   as' <- mapM (const freshv) as

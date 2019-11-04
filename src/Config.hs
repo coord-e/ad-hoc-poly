@@ -3,10 +3,10 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Config where
 
-import           AST.Source
+import           AST.Source       hiding (type_)
 import qualified Parse.Internal   as P (Parser)
 import           Parse.Kind       (kind)
-import           Parse.Type       (typeScheme)
+import           Parse.Type       (typeScheme, type_)
 import           Reporting.Error
 
 import           Data.Aeson.Types (typeMismatch)
@@ -18,11 +18,11 @@ import           Text.Megaparsec  (errorBundlePretty, parse)
 
 
 data LiteralTypes
-  = LiteralTypes { integer :: TypeScheme
-                 , real    :: TypeScheme
-                 , char    :: TypeScheme
-                 , boolean :: TypeScheme
-                 , string  :: TypeScheme }
+  = LiteralTypes { integer :: Type
+                 , real    :: Type
+                 , char    :: Type
+                 , boolean :: Type
+                 , string  :: Type }
   deriving Show
 
 data Config
@@ -31,6 +31,10 @@ data Config
            , bindings     :: Map.Map String TypeScheme }
   deriving Show
 
+
+instance FromJSON Type where
+  parseJSON (String text) = parseAndBundle type_ text
+  parseJSON o             = typeMismatch "String" o
 
 instance FromJSON TypeScheme where
   parseJSON (String text) = parseAndBundle typeScheme text
