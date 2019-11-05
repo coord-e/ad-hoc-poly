@@ -26,9 +26,9 @@ import qualified Data.Map                  as Map
 
 compile :: Config -> S.Expr -> Result T.Expr
 compile (Config bases lits binds) e = do
-  ((_, _, e', left), cs) <- run . runError . runState initConstraints . runReader (mkInitEnv bases lits) . runFresh' 0 . loadBindings binds $ globalInfer e
+  ((Forall _ (PredType cstrs _), e'), cs) <- run . runError . runState initConstraints . runReader (mkInitEnv bases lits) . runFresh' 0 . loadBindings binds $ globalInfer e
   _ <- runSolve cs
-  unless (null left) (Left . TypeError $ UnresolvedVariable left)
+  unless (null cstrs) (Left . TypeError $ UnresolvedVariable cstrs)
   return e'
 
 
@@ -44,4 +44,4 @@ loadBindings = flip $ Map.foldrWithKey go
   where
     go x s e = do
       s' <- runSchemeEvalToType s
-      withBinding x s' (S.Var x) e
+      withBinding x s' e

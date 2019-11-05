@@ -72,15 +72,14 @@ localInfer (S.Over s e) = do
 localInfer (S.Satisfy sc e1 e2) = do
   (x, sc') <- extractConstraint sc
   whenM (isOverlapping x sc') (throwError . TypeError $ OverlappingInstance x sc')
-  (s1, sraw, e1', left) <- raise $ globalInfer e1
-  unlessM (sc' `isInstance` sraw) (throwError . TypeError $ UnableToInstantiate x sraw sc')
+  (s1, e1') <- raise $ globalInfer e1
+  unlessM ((&&) <$> sc' `isInstance` s1 <*> s1 `isInstance` sc') (throwError . TypeError $ UnableToInstantiate x s1 sc')
   n <- freshn x
-  let inst = (sc', applyLeft n left)
-  (t2, e2') <- withInstance x inst $ withBinding n s1 $ localInfer e2
+  (t2, e2') <- withInstance x (sc', n) $ withBinding n s1 $ localInfer e2
   return (t2, T.Let n e1' e2')
 localInfer (S.Let x e1 e2) = do
-  (s1, sraw, e1', left) <- raise $ globalInfer e1
-  (t2, e2') <- withBinding x sraw $ localInfer e2
+  (s1, e1') <- raise $ globalInfer e1
+  (t2, e2') <- withBinding x s1 $ localInfer e2
   return (t2, T.Let x e1' e2')
 
 runLocalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (Type, T.Expr, [Candidate])
@@ -116,7 +115,7 @@ extractConstraint s@(S.Forall _ t) = do
 applyLeft :: S.Name -> [S.Name] -> S.Expr
 applyLeft n = foldl ((. S.Var) . S.App) (S.Var n)
 
-withInstance :: Member (Reader Env) r => S.Name -> (TypeScheme, S.Expr) -> Eff r a -> Eff r a
+withInstance :: Member (Reader Env) r => S.Name -> (TypeScheme, T.Name) -> Eff r a -> Eff r a
 withInstance x i = local (over (context . instantiations) (adjustWithDefault (i:) [i] x))
 
 withBinding :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a

@@ -2,6 +2,7 @@
 module Overload.Instance where
 
 import qualified AST.Source                as S
+import qualified AST.Target                as T
 import           Overload.Env
 import           Overload.Subst
 import           Overload.Type
@@ -33,7 +34,7 @@ isInstanceType t1 t2 = do
   s@(Subst m) <- eitherToMaybe $ runUnifyAndSolve t2 t1
   toMaybe (disjointKeys m $ ftv t1) s
 
-findInstantiation :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r (Maybe (TypeScheme, S.Expr))
+findInstantiation :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r (Maybe (TypeScheme, T.Name))
 findInstantiation x s = fmap join . mapM (findM . views _1 $ isInstance s) =<< reader (views (context . instantiations) $ Map.lookup x)
 
 canBeEliminated :: Member (Reader Env) r => Constraint -> Eff r Bool

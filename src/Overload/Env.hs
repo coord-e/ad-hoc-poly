@@ -2,6 +2,7 @@
 module Overload.Env where
 
 import qualified AST.Source        as S
+import qualified AST.Target        as T
 import           Config
 import           Overload.Kind
 import           Overload.Subst
@@ -16,7 +17,7 @@ import qualified Data.Set          as Set
 
 data Context
   = Context { _overloads      :: Map.Map S.Name TypeScheme
-            , _instantiations :: Map.Map S.Name [(TypeScheme, S.Expr)]
+            , _instantiations :: Map.Map S.Name [(TypeScheme, T.Name)]
             , _bindings       :: Map.Map S.Name TypeScheme }
 
 makeLenses ''Context
@@ -61,7 +62,7 @@ instance Report Context where
     where
       go1 = Map.foldrWithKey (\x s acc -> acc ++ x ++ " = " ++ report s ++ "\n") ""
       go2 = Map.foldrWithKey (\x is acc -> acc ++ foldr (folder x) "" is) ""
-      folder x (s, e) acc = acc ++ x ++ " = " ++ report s ++ " ~> " ++ report e ++ "\n"
+      folder x (s, xt) acc = acc ++ x ++ " = " ++ report s ++ " ~> " ++ xt ++ "\n"
 
 
 -- Substitutable instances
