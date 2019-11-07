@@ -59,9 +59,10 @@ localInfer (S.Var x) = maybeM (maybeM (throwError $ TypeError $ UnboundVariable 
     inferVarOver s = do
       p <- instantiate s
       i <- fresh
+      (t, e) <- resolvePredicates (T.Placeholder i) p
       c <- reader (view context)
-      tell $ Candidate i x p c
-      resolvePredicates (T.Placeholder i) p
+      tell $ Candidate i x t c
+      return (t, e)
 localInfer (S.Type x t e) = do
   k <- kind t
   s <- runEval t
@@ -91,21 +92,20 @@ runLocalInfer e = do
 resolvePredicates :: T.Expr -> PredType -> Eff '[Writer Candidate, Fresh, Reader Env, State Constraints, Exc Error] (Type, T.Expr)
 resolvePredicates e (PredType [] t) = return (t, e)
 resolvePredicates e (PredType cs t) = do
-  tv <- TVar <$> freshv
-  (e', f) <- foldrM go (e, id) cs
-  unify t (f tv)
-  return (tv, e')
+  e' <- foldrM go e cs
+  return (t, e')
   where
-    go (Constraint x _) (ae, k) = do
+    go (Constraint x s) ae = do
       (tx, ex) <- localInfer $ S.Var x
-      return (T.App ae ex, k . TFun tx)
+      unify tx s
+      return (T.App ae ex)
 
 extractConstraint :: (Member (Exc Error) r, Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff r (S.Name, TypeScheme)
 extractConstraint s@(S.Forall _ t) = do
   kindTo t K.Constraint
   SForall as (PredSem cs t') <- runSchemeEval s
-  let Constraint x (Forall as' (PredType cs' t'')) = extract t'
-  return (x, Forall (as ++ as') (PredType (cs ++ cs') t''))
+  let Constraint x t'' = extract t'
+  return (x, Forall as (PredType cs t''))
   where
     extract (SConstraint c) = c
     extract _               = error "something went wrong in kinding"

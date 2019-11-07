@@ -35,7 +35,7 @@ data Type
   | TLam TypeName Type
   | TTuple [Type]
   | TPredicate Type Type
-  | TConstraint Name TypeScheme
+  | TConstraint Name Type
   deriving (Show, Eq)
 
 
@@ -85,7 +85,7 @@ instance Report Type where
       go (TLamF x t)         = paren ("Λ" ++ x ++ ". " ++ t)
       go (TTupleF ts)        = paren (intercalate ", " ts)
       go (TPredicateF t1 t2) = t1 ++ " => " ++ t2
-      go (TConstraintF x s)  = "constraint " ++ x ++ " " ++ paren (report s)
+      go (TConstraintF x t)  = "constraint " ++ x ++ " " ++ paren t
 
 instance Report TypeScheme where
   report (Forall as t) = "∀" ++ unwords (map ('\'':) as) ++ ". " ++ report t

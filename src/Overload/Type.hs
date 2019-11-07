@@ -34,7 +34,7 @@ makeBaseFunctor ''Type
 -- normalized type (Constraint kind)
 data Constraint
   = Constraint { _name        :: S.TypeName
-               , _requirement :: TypeScheme }
+               , _requirement :: Type }
   deriving (Show, Eq)
 
 

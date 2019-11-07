@@ -28,14 +28,16 @@ type PSubst = IntMap.IntMap T.Expr
 -- TODO: implement without primitive recursion
 scanWaitList :: Subst -> WaitList -> ([Constraint], T.Expr, PSubst) -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] ([Constraint], T.Expr, PSubst)
 scanWaitList _ [] acc = return acc
-scanWaitList s (Candidate i x p ctx:wl) (acs, ae, m) = do
-  inst <- local (set context ctx) . findInstantiation x . scheme $ apply s p
+scanWaitList subst (Candidate i x t ctx:wl) (acs, ae, m) = do
+  inst <- local (set context ctx) . findInstantiation x . scheme . predt $ apply subst t
   case inst of
-    Just (_, xt) -> scanWaitList s wl (acs, ae, IntMap.insert i (T.Var xt) m)
+    Just (_, xt) -> do
+      (_, e', wl') <- local (set context ctx) $ runLocalInfer (S.Var xt)
+      scanWaitList subst (wl++wl') (acs, ae, IntMap.insert i e' m)
     Nothing -> do
       n <- freshn x
-      let c = Constraint x $ scheme p
-      scanWaitList s wl (c:acs, T.Lam n ae, IntMap.insert i (T.Var n) m)
+      let c = Constraint x t
+      scanWaitList subst wl (c:acs, T.Lam n ae, IntMap.insert i (T.Var n) m)
 
 runScanWaitList :: Subst -> T.Expr -> WaitList -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] ([Constraint], T.Expr, PSubst)
 runScanWaitList s e wl = scanWaitList s wl ([], e, IntMap.empty)

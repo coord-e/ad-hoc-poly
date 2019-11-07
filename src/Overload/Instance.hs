@@ -38,8 +38,9 @@ findInstantiation :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r (May
 findInstantiation x s = fmap join . mapM (findM . views _1 $ isInstance s) =<< reader (views (context . instantiations) $ Map.lookup x)
 
 canBeEliminated :: Member (Reader Env) r => Constraint -> Eff r Bool
-canBeEliminated (Constraint x s) = (||) <$> bound <*> inst
+canBeEliminated (Constraint x t) = (||) <$> bound <*> inst
   where
+    s = Forall [] $ PredType [] t
     bound = (== Just s) <$> reader (views (context . bindings) $ Map.lookup x)
     inst = isJust <$> findInstantiation x s
 

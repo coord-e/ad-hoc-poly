@@ -36,7 +36,7 @@ kind (S.TApp t1 t2) = do
     k -> throwKindError $ UnableToApply k k2
 kind (S.TLam x t) = Arrow Star <$> local (over kindEnv $ Map.insert x Star) (kind t)
 kind (S.TTuple ts) = mapM_ (unify Star <=< kind) ts >> return Star
-kind (S.TConstraint _ (S.Forall _ t)) = (unify Star =<< kind t) >> return Constraint
+kind (S.TConstraint _ t) = (unify Star =<< kind t) >> return Constraint
 kind (S.TPredicate t1 t2) = (unify Constraint =<< kind t1) >> kind t2
 
 kindTo :: (Member (Reader Env) r, Member (Exc Error) r) => S.Type -> Kind -> Eff r ()
