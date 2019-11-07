@@ -32,8 +32,10 @@ scanWaitList subst (Candidate i x t ctx:wl) (acs, ae, m) = do
   inst <- local (set context ctx) . findInstantiation x . scheme . predt $ apply subst t
   case inst of
     Just (_, xt) -> do
-      (_, e', wl') <- local (set context ctx) $ runLocalInfer (S.Var xt)
-      scanWaitList subst (wl++wl') (acs, ae, IntMap.insert i e' m)
+      (t', e', wl') <- local (set context ctx) $ runLocalInfer (S.Var xt)
+      unify t t'
+      subst' <- getCurrentSubst
+      scanWaitList subst' (wl++wl') (acs, ae, IntMap.insert i e' m)
     Nothing -> do
       n <- freshn x
       let c = Constraint x t
