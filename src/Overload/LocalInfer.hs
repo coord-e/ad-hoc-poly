@@ -95,9 +95,9 @@ resolvePredicates e (PredType cs t) = do
   e' <- foldrM go e cs
   return (t, e')
   where
-    go (Constraint x s) ae = do
+    go (Constraint x tc) ae = do
       (tx, ex) <- localInfer $ S.Var x
-      unify tx s
+      unify tx tc
       return (T.App ae ex)
 
 extractConstraint :: (Member (Exc Error) r, Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff r (S.Name, TypeScheme)
