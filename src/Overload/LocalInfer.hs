@@ -30,7 +30,7 @@ import           Control.Exception         (assert)
 import           Control.Lens
 import           Control.Monad.Extra       (maybeM, unlessM, whenM)
 import           Data.Bifunctor
-import           Data.Foldable             (foldrM)
+import           Data.Foldable             (foldlM)
 import qualified Data.Map                  as Map
 
 
@@ -92,10 +92,10 @@ runLocalInfer e = do
 resolvePredicates :: T.Expr -> PredType -> Eff '[Writer Candidate, Fresh, Reader Env, State Constraints, Exc Error] (Type, T.Expr)
 resolvePredicates e (PredType [] t) = return (t, e)
 resolvePredicates e (PredType cs t) = do
-  e' <- foldrM go e cs
+  e' <- foldlM go e cs
   return (t, e')
   where
-    go (Constraint x tc) ae = do
+    go ae (Constraint x tc) = do
       (tx, ex) <- localInfer $ S.Var x
       unify tx tc
       return (T.App ae ex)
