@@ -37,6 +37,9 @@ isInstanceType t1 t2 = do
 findInstantiation :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r (Maybe (TypeScheme, T.Name))
 findInstantiation x s = fmap join . mapM (findM . views _1 $ isInstance s) =<< reader (views (context . instantiations) $ Map.lookup x)
 
+findInstantiationType :: Member (Reader Env) r => S.Name -> Type -> Eff r (Maybe (TypeScheme, T.Name))
+findInstantiationType x = findInstantiation x . Forall [] . PredType []
+
 canBeEliminated :: Member (Reader Env) r => Constraint -> Eff r Bool
 canBeEliminated (Constraint x t) = (||) <$> bound <*> inst
   where

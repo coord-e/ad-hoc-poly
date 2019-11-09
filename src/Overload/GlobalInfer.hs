@@ -29,7 +29,7 @@ type PSubst = IntMap.IntMap T.Expr
 scanWaitList :: Subst -> WaitList -> ([Constraint], T.Expr, PSubst) -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] ([Constraint], T.Expr, PSubst)
 scanWaitList _ [] acc = return acc
 scanWaitList subst (Candidate i x t ctx:wl) (acs, ae, m) = do
-  inst <- local (set context ctx) . findInstantiation x . scheme . predt $ apply subst t
+  inst <- local (set context ctx) . findInstantiationType x $ apply subst t
   case inst of
     Just (_, xt) -> do
       (t', e', wl') <- local (set context ctx) $ runLocalInfer (S.Var xt)
