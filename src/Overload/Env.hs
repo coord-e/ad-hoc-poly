@@ -2,6 +2,7 @@
 module Overload.Env where
 
 import qualified AST.Source        as S
+import qualified AST.Target        as T
 import           Config
 import           Overload.Kind
 import           Overload.Subst
@@ -16,8 +17,8 @@ import qualified Data.Set          as Set
 
 data Context
   = Context { _overloads      :: Map.Map S.Name TypeScheme
-            , _instantiations :: Map.Map S.Name [(TypeScheme, S.Expr)]
-            , _bindings       :: Map.Map S.Name (TypeScheme, S.Expr) }
+            , _instantiations :: Map.Map S.Name [(TypeScheme, T.Name)]
+            , _bindings       :: Map.Map S.Name TypeScheme }
 
 makeLenses ''Context
 
@@ -37,7 +38,7 @@ makeLenses ''Env
 data Candidate
   = Candidate { _id_          :: Int
               , _name         :: S.Name
-              , _type_        :: PredType
+              , _type_        :: Type
               , _savedContext :: Context }
 
 makeLenses ''Candidate
@@ -57,28 +58,25 @@ initConstraints = Constraints nullSubst []
 
 -- Report instances
 instance Report Context where
-  report (Context overs insts binds) = "[overloadings]\n" ++ go1 overs ++ "[instantiations]\n" ++ go2 insts ++ "[bindings]\n" ++ go3 binds
+  report (Context overs insts binds) = "[overloadings]\n" ++ go1 overs ++ "[instantiations]\n" ++ go2 insts ++ "[bindings]\n" ++ go1 binds
     where
       go1 = Map.foldrWithKey (\x s acc -> acc ++ x ++ " = " ++ report s ++ "\n") ""
       go2 = Map.foldrWithKey (\x is acc -> acc ++ foldr (folder x) "" is) ""
-      folder x (s, e) acc = acc ++ x ++ " = " ++ report s ++ " ~> " ++ report e ++ "\n"
-      go3 = Map.foldrWithKey (\x (s, e) acc -> acc ++ x ++ " = " ++ report s ++ " ~> " ++ report e ++ "\n") ""
+      folder x (s, xt) acc = acc ++ x ++ " = " ++ report s ++ " ~> " ++ xt ++ "\n"
 
 
 -- Substitutable instances
 instance Substitutable Context where
   apply s (Context overs insts binds) = assert (go1 overs == overs) $
                                         assert (go2 insts == insts) $
-                                        Context overs insts (go3 binds)
+                                        Context overs insts (go1 binds)
     where
       go1 = Map.map $ apply s
       go2 = Map.map . map . over _1 $ apply s
-      go3 = Map.map . over _1 $ apply s
 
   ftv (Context overs insts binds) = assert (go1 overs == Set.empty) $
                                     assert (go2 insts == Set.empty) $
-                                    go3 binds
+                                    go1 binds
     where
       go1 = Map.foldr (Set.union . ftv) Set.empty
       go2 = Map.foldr (Set.union . foldr (Set.union . views _1 ftv) Set.empty) Set.empty
-      go3 = Map.foldr (Set.union . views _1 ftv) Set.empty

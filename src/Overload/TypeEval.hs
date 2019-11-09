@@ -4,7 +4,6 @@ module Overload.TypeEval where
 
 import qualified AST.Source                as S
 import           Overload.Env
-import           Overload.Subst
 import           Overload.Type
 import           Overload.Var
 
@@ -13,9 +12,7 @@ import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
 import           Control.Eff.Writer.Strict
 import           Control.Lens
-import           Data.List                 (partition)
 import qualified Data.Map                  as Map
-import qualified Data.Set                  as Set
 
 
 type TyVarEnv = Map.Map S.TVarName TyVar
@@ -43,17 +40,7 @@ eval (S.TApp t1 t2)           = do
   t2' <- eval t2
   local (set typeEnv_ $ Map.insert x (PredSem [] t2') env) $ eval body
 eval (S.TLam x t) = SClosure x t <$> reader (view typeEnv_)
-eval (S.TConstraint x s)       = SConstraint . Constraint x <$> evalScheme s
-  where
-    evalScheme (S.Forall as t) = do
-      as' <- mapM (const freshv) as
-      (t', cs) <- runListWriter $ expectTy <$> local (over typeVars $ adding as as') (eval t)
-      let (outer, inner) = partition (isBoundBy $ Set.fromList as') cs
-      mapM_ tell outer
-      return $ Forall as' (PredType inner t')
-    isBoundBy as c = Set.disjoint (ftv c) as
-    go (a, a') = Map.insert a a'
-    adding ks vs m = foldr go m (zip ks vs)
+eval (S.TConstraint x s)       = SConstraint . Constraint x . expectTy <$> eval s
 
 
 expectTy :: Sem -> Type
@@ -78,6 +65,12 @@ runEvalWithVars e t = do
 
 runEval :: (Member Fresh r, Member (Reader Env) r) => S.Type -> Eff r PredSem
 runEval = runEvalWithVars Map.empty
+
+runEvalToType :: (Member Fresh r, Member (Reader Env) r) => S.Type -> Eff r PredType
+runEvalToType = fmap extract . runEval
+  where
+    extract (PredSem cs (SType t)) = PredType cs t
+    extract _                      = error "something went wrong in kinding"
 
 runSchemeEval :: (Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff r SemScheme
 runSchemeEval (S.Forall as t) = do

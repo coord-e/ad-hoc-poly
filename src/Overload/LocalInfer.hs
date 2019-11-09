@@ -12,8 +12,8 @@ import           Overload.Instance
 import qualified Overload.Kind             as K
 import           Overload.KindInfer        (kind, kindTo)
 import           Overload.Type
-import           Overload.TypeEval         (runEval, runSchemeEval,
-                                            runSchemeEvalToType)
+import           Overload.TypeEval         (runEval, runEvalToType,
+                                            runSchemeEval)
 import           Overload.Unify
 import           Overload.Var
 import           Reporting.Error
@@ -26,45 +26,43 @@ import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
 import           Control.Eff.State.Strict
 import           Control.Eff.Writer.Strict
+import           Control.Exception         (assert)
 import           Control.Lens
 import           Control.Monad.Extra       (maybeM, unlessM, whenM)
 import           Data.Bifunctor
+import           Data.Foldable             (foldlM)
 import qualified Data.Map                  as Map
 
 
-localInfer :: S.Expr -> Eff '[Writer Candidate, Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr)
+localInfer :: S.Expr -> Eff '[Writer Candidate, Fresh, Reader Env, State Constraints, Exc Error] (Type, T.Expr)
 localInfer (S.Int i)    = (, T.Int i) <$> literalType integer
 localInfer (S.Char c)   = (, T.Char c) <$> literalType char
 localInfer (S.Str s)    = (, T.Str s) <$> literalType string
 localInfer (S.Real f)   = (, T.Real f) <$> literalType real
 localInfer (S.Bool b)   = (, T.Bool b) <$> literalType boolean
-localInfer (S.Tuple xs) = bimap (overpred TTuple) T.Tuple . unzip <$> mapM localInfer xs
+localInfer (S.Tuple xs) = bimap TTuple T.Tuple . unzip <$> mapM localInfer xs
 localInfer (S.Lam x e)  = do
   tv <- TVar <$> freshv
-  (PredType cs ret, e') <- withBinding x (scheme $ predt tv) (S.Var x) $ localInfer e
-  return (PredType cs (TFun tv ret), T.Lam x e')
+  (ret, e') <- withBinding x (scheme $ predt tv) $ localInfer e
+  return (TFun tv ret, T.Lam x e')
 localInfer (S.App e1 e2) = do
   tv <- TVar <$> freshv
-  (PredType cs1 t1, e1') <- localInfer e1
-  (PredType cs2 t2, e2') <- localInfer e2
+  (t1, e1') <- localInfer e1
+  (t2, e2') <- localInfer e2
   unify t1 (TFun t2 tv)
-  return (PredType (cs1 ++ cs2) tv, T.App e1' e2')
+  return (tv, T.App e1' e2')
 localInfer (S.Var x) = maybeM (maybeM (throwError $ TypeError $ UnboundVariable x) inferVarOver overload) inferVarBound bound
   where
     bound = reader (views (context . bindings) (Map.lookup x))
     overload = reader (views (context . overloads) (Map.lookup x))
-    -- NOTE: guard to avoid infinity loop
-    inferVarBound (s, S.Var x') | x == x' = (, T.Var x) <$> instantiate s
-    inferVarBound (s, e) = do
-      p <- instantiate s
-      (p', e') <- localInfer e
-      (, e') <$> unifyP p p'
+    inferVarBound s = resolvePredicates (T.Var x) =<< instantiate s
     inferVarOver s = do
       p <- instantiate s
       i <- fresh
+      (t, e) <- resolvePredicates (T.Placeholder i) p
       c <- reader (view context)
-      tell $ Candidate i x p c
-      return (p, T.Placeholder i)
+      tell $ Candidate i x t c
+      return (t, e)
 localInfer (S.Type x t e) = do
   k <- kind t
   s <- runEval t
@@ -75,30 +73,39 @@ localInfer (S.Over s e) = do
 localInfer (S.Satisfy sc e1 e2) = do
   (x, sc') <- extractConstraint sc
   whenM (isOverlapping x sc') (throwError . TypeError $ OverlappingInstance x sc')
-  (s1, sraw, e1', left) <- raise $ globalInfer e1
-  unlessM (sc' `isInstance` sraw) (throwError . TypeError $ UnableToInstantiate x sraw sc')
+  (s1, e1') <- raise $ globalInfer e1
+  unlessM ((&&) <$> sc' `isInstance` s1 <*> s1 `isInstance` sc') (throwError . TypeError $ UnableToInstantiate x s1 sc')
   n <- freshn x
-  let inst = (sc', applyLeft n left)
-  (p2, e2') <- withInstance x inst $ withBinding n s1 (S.Var n) $ localInfer e2
-  return (p2, T.Let n e1' e2')
+  (t2, e2') <- withInstance x (sc', n) $ withBinding n s1 $ localInfer e2
+  return (t2, T.Let n e1' e2')
 localInfer (S.Let x e1 e2) = do
-  (s1, sraw, e1', left) <- raise $ globalInfer e1
-  n <- freshn x
-  (p2, e2') <- withBinding x sraw (applyLeft n left) . withBinding n s1 (S.Var n) $ localInfer e2
-  return (p2, T.Let n e1' e2')
+  (s1, e1') <- raise $ globalInfer e1
+  (t2, e2') <- withBinding x s1 $ localInfer e2
+  return (t2, T.Let x e1' e2')
 
-runLocalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr, [Candidate])
+runLocalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (Type, T.Expr, [Candidate])
 runLocalInfer e = do
-  ((p, e'), wl) <- runListWriter $ localInfer e
-  return (p, e', wl)
+  ((t, e'), wl) <- runListWriter $ localInfer e
+  return (t, e', wl)
 
+
+resolvePredicates :: T.Expr -> PredType -> Eff '[Writer Candidate, Fresh, Reader Env, State Constraints, Exc Error] (Type, T.Expr)
+resolvePredicates e (PredType [] t) = return (t, e)
+resolvePredicates e (PredType cs t) = do
+  e' <- foldlM go e cs
+  return (t, e')
+  where
+    go ae (Constraint x tc) = do
+      (tx, ex) <- localInfer $ S.Var x
+      unify tx tc
+      return (T.App ae ex)
 
 extractConstraint :: (Member (Exc Error) r, Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff r (S.Name, TypeScheme)
 extractConstraint s@(S.Forall _ t) = do
   kindTo t K.Constraint
   SForall as (PredSem cs t') <- runSchemeEval s
-  let Constraint x (Forall as' (PredType cs' t'')) = extract t'
-  return (x, Forall (as ++ as') (PredType (cs ++ cs') t''))
+  let Constraint x t'' = extract t'
+  return (x, Forall as (PredType cs t''))
   where
     extract (SConstraint c) = c
     extract _               = error "something went wrong in kinding"
@@ -108,11 +115,11 @@ extractConstraint s@(S.Forall _ t) = do
 applyLeft :: S.Name -> [S.Name] -> S.Expr
 applyLeft n = foldl ((. S.Var) . S.App) (S.Var n)
 
-withInstance :: Member (Reader Env) r => S.Name -> (TypeScheme, S.Expr) -> Eff r a -> Eff r a
+withInstance :: Member (Reader Env) r => S.Name -> (TypeScheme, T.Name) -> Eff r a -> Eff r a
 withInstance x i = local (over (context . instantiations) (adjustWithDefault (i:) [i] x))
 
-withBinding :: Member (Reader Env) r => S.Name -> TypeScheme -> S.Expr -> Eff r a -> Eff r a
-withBinding x t e = local (over (context . bindings) (Map.insert x (t, e)))
+withBinding :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
+withBinding x s = local (over (context . bindings) (Map.insert x s))
 
 withOverload :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
 withOverload x t = local (over (context . overloads) (Map.insert x t))
@@ -120,13 +127,13 @@ withOverload x t = local (over (context . overloads) (Map.insert x t))
 adjustWithDefault :: Ord k => (a -> a) -> a -> k -> Map.Map k a -> Map.Map k a
 adjustWithDefault f def = Map.alter (Just . maybe def f)
 
-literalType :: (Member (Exc Error) r, Member (Reader Env) r, Member Fresh r) => (LiteralTypes -> S.TypeScheme) -> Eff r PredType
+literalType :: (Member (Exc Error) r, Member (Reader Env) r, Member Fresh r) => (LiteralTypes -> S.Type) -> Eff r Type
 literalType f = do
   -- TODO: it is inefficient to evalutate S.TypeScheme at every literals' occurence
-  s@(S.Forall _ t) <- f <$> reader (view literalTypes)
+  t <- f <$> reader (view literalTypes)
   kindTo t K.Star
-  s' <- runSchemeEvalToType s
-  instantiate s'
+  PredType cs t' <- runEvalToType t
+  assert (null cs) $ return t'
 
 scheme :: PredType -> TypeScheme
 scheme = Forall []

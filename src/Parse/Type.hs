@@ -41,7 +41,7 @@ constraint = do
   rword_ "constraint"
   x <- name
   symbol "::"
-  TConstraint x <$> typeScheme
+  TConstraint x <$> type_
 
 typeSchemeBase :: Parser TypeScheme
 typeSchemeBase = do

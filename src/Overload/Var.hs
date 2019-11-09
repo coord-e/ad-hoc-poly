@@ -17,10 +17,10 @@ freshv :: Member Fresh r => Eff r TyVar
 freshv = TV <$> fresh
 
 instantiate :: Member Fresh r => TypeScheme -> Eff r PredType
-instantiate (Forall as (PredType cs t)) = do
+instantiate (Forall as p) = do
   as' <- mapM (fmap TVar . const freshv) as
   let s = Subst $ Map.fromList $ zip as as'
-  return $ PredType cs $ apply s t
+  return $ apply s p
 
 generalize :: Member (Reader Env) r => PredType -> Eff r TypeScheme
 generalize p = do
