@@ -9,6 +9,7 @@ import           Config                    (LiteralTypes (..))
 import           Overload.Env
 import {-# SOURCE #-} Overload.GlobalInfer
 import           Overload.Instance
+import           Overload.Internal
 import qualified Overload.Kind             as K
 import           Overload.KindInfer        (kind, kindTo)
 import           Overload.Type
@@ -109,10 +110,6 @@ extractConstraint s@(S.Forall _ t) = do
     extract (SConstraint c) = c
     extract _               = error "something went wrong in kinding"
 
--- > applyLeft "n" ["a", "b", "c"]
--- App (App (App (Var "n") (Var "a")) (Var "b")) (Var "c")
-applyLeft :: S.Name -> [S.Name] -> S.Expr
-applyLeft n = foldl ((. S.Var) . S.App) (S.Var n)
 
 withInstance :: Member (Reader Env) r => S.Name -> (TypeScheme, T.Name) -> Eff r a -> Eff r a
 withInstance x i = local (over (context . instantiations) (adjustWithDefault (i:) [i] x))
@@ -121,13 +118,10 @@ withBinding :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r
 withBinding x s = local (over (context . bindings) (Map.insert x s))
 
 withBindingType :: Member (Reader Env) r => S.Name -> Type -> Eff r a -> Eff r a
-withBindingType x = withBinding x . Forall [] . PredType []
+withBindingType x = withBinding x . scheme
 
 withOverload :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
 withOverload x t = local (over (context . overloads) (Map.insert x t))
-
-adjustWithDefault :: Ord k => (a -> a) -> a -> k -> Map.Map k a -> Map.Map k a
-adjustWithDefault f def = Map.alter (Just . maybe def f)
 
 literalType :: (Member (Exc Error) r, Member (Reader Env) r, Member Fresh r) => (LiteralTypes -> S.Type) -> Eff r Type
 literalType f = do

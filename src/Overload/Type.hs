@@ -54,6 +54,9 @@ makeLenses ''TypeScheme
 makeLenses ''PredType
 makeLenses ''Constraint
 
+scheme :: Type -> TypeScheme
+scheme = Forall [] . PredType []
+
 
 type TypeEnv = Map.Map S.TypeName PredSem
 

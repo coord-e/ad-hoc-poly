@@ -21,9 +21,6 @@ import           Safe.Exact               (zipExactMay)
 unify :: Member (State Constraints) r => Type -> Type -> Eff r ()
 unify t1 t2 = modify $ over unifications ((t1, t2):)
 
-unifyP :: Member (State Constraints) r => PredType -> PredType -> Eff r PredType
-unifyP (PredType cs1 t1) (PredType cs2 t2) = unify t1 t2 >> return (PredType (cs1 ++ cs2) t1)
-
 
 runSolve :: Constraints -> Either Error Subst
 runSolve cs = run . runError $ solve cs

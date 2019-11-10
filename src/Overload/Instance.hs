@@ -4,6 +4,7 @@ module Overload.Instance where
 import qualified AST.Source                as S
 import qualified AST.Target                as T
 import           Overload.Env
+import           Overload.Internal
 import           Overload.Subst
 import           Overload.Type
 import           Overload.Unify
@@ -38,12 +39,12 @@ findInstantiation :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r (May
 findInstantiation x s = fmap join . mapM (findM . views _1 $ isInstance s) =<< reader (views (context . instantiations) $ Map.lookup x)
 
 findInstantiationType :: Member (Reader Env) r => S.Name -> Type -> Eff r (Maybe (TypeScheme, T.Name))
-findInstantiationType x = findInstantiation x . Forall [] . PredType []
+findInstantiationType x = findInstantiation x . scheme
 
 canBeEliminated :: Member (Reader Env) r => Constraint -> Eff r Bool
 canBeEliminated (Constraint x t) = (||) <$> bound <*> inst
   where
-    s = Forall [] $ PredType [] t
+    s = scheme t
     bound = (== Just s) <$> reader (views (context . bindings) $ Map.lookup x)
     inst = isJust <$> findInstantiation x s
 
@@ -51,11 +52,3 @@ isOverlapping :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r Bool
 isOverlapping x s = maybe (return False) (anyM check) =<< reader (views (context . instantiations) $ Map.lookup x)
   where
     check (s', _) = (||) <$> isInstance s s' <*> isInstance s' s
-
-
-toMaybe :: Bool -> a -> Maybe a
-toMaybe True  = Just
-toMaybe False = const Nothing
-
-disjointKeys :: Ord k => Map.Map k v -> Set.Set k -> Bool
-disjointKeys m = Map.null . Map.restrictKeys m
