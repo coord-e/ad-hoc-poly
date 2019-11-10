@@ -29,7 +29,6 @@ import           Control.Eff.Writer.Strict
 import           Control.Exception         (assert)
 import           Control.Lens
 import           Control.Monad.Extra       (maybeM, unlessM, whenM)
-import           Data.Bifunctor
 import           Data.Foldable             (foldlM)
 import qualified Data.Map                  as Map
 
@@ -43,7 +42,7 @@ localInfer (S.Bool b)   = (, T.Bool b) <$> literalType boolean
 localInfer (S.Tuple xs) = bimap TTuple T.Tuple . unzip <$> mapM localInfer xs
 localInfer (S.Lam x e)  = do
   tv <- TVar <$> freshv
-  (ret, e') <- withBinding x (scheme $ predt tv) $ localInfer e
+  (ret, e') <- withBindingType x tv $ localInfer e
   return (TFun tv ret, T.Lam x e')
 localInfer (S.App e1 e2) = do
   tv <- TVar <$> freshv
@@ -121,6 +120,9 @@ withInstance x i = local (over (context . instantiations) (adjustWithDefault (i:
 withBinding :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
 withBinding x s = local (over (context . bindings) (Map.insert x s))
 
+withBindingType :: Member (Reader Env) r => S.Name -> Type -> Eff r a -> Eff r a
+withBindingType x = withBinding x . Forall [] . PredType []
+
 withOverload :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
 withOverload x t = local (over (context . overloads) (Map.insert x t))
 
@@ -134,20 +136,6 @@ literalType f = do
   kindTo t K.Star
   PredType cs t' <- runEvalToType t
   assert (null cs) $ return t'
-
-scheme :: PredType -> TypeScheme
-scheme = Forall []
-
-predt :: Type -> PredType
-predt = PredType []
-
-overpred :: ([Type] -> Type) -> [PredType] -> PredType
-overpred f = uncurry PredType . second f . foldr go ([], [])
-  where
-    go (PredType cs t) (acs, ats) = (acs ++ cs, t : ats)
-
-addpred :: [Constraint] -> PredType -> PredType
-addpred cs' (PredType cs t) = PredType (cs ++ cs') t
 
 freshn :: Member Fresh r => String -> Eff r T.Name
 freshn base = do
