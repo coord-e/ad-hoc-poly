@@ -9,7 +9,6 @@ import           Overload.LocalInfer
 import           Overload.Subst
 import           Overload.Type
 import           Overload.Unify
-import           Overload.Var
 import           Reporting.Error
 
 import           Control.Eff

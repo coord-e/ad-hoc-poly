@@ -29,7 +29,7 @@ import           Control.Eff.State.Strict
 import           Control.Eff.Writer.Strict
 import           Control.Exception         (assert)
 import           Control.Lens
-import           Control.Monad.Extra       (maybeM, unlessM, whenM)
+import           Control.Monad.Extra       (fromMaybeM, maybeM, unlessM, whenM)
 import           Data.Foldable             (foldlM)
 import qualified Data.Map                  as Map
 
@@ -71,7 +71,8 @@ localInfer (S.Over s e) = do
   withOverload x s' $ localInfer e
 localInfer (S.Satisfy sc e1 e2) = do
   (x, sc') <- extractConstraint sc
-  -- TODO: Check sc' is instance of over(x) (for superclasses)
+  over <- fromMaybeM (throwError . TypeError $ NotOverloadedInstance x) $ reader (views (context . overloads) (Map.lookup x))
+  unlessM (sc' `isInstance` over) (throwError . TypeError $ InvalidInstance x over sc')
   -- TODO: Check overlapping instance in finding instantiations
   whenM (isOverlapping x sc') (throwError . TypeError $ OverlappingInstance x sc')
   (p1, e1') <- raise $ globalInfer e1
