@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-import           Data.Text        (Text, pack)
+import           Data.Text        (Text, pack, strip)
 import           Shelly           hiding (FilePath)
 import           System.IO        (hClose, hPutStr)
 import           System.IO.Temp   (withSystemTempFile)
@@ -19,7 +19,7 @@ runML source = withSystemTempFile ".ml" $ \file h -> do
   hPutStr h =<< readFile "test/data/template.ml"
   hPutStr h source
   hClose h
-  shelly $ run "ocaml" [pack file]
+  strip <$> shelly (run "ocaml" [pack file])
 
 testSample :: FilePath -> IO Text
 testSample file = do
