@@ -6,4 +6,4 @@ instance (Zeroable Int) = λx. eq x 0 in
 instance (Zeroable Float) = λx. eq x 0.0 in
 instance (Eq Int) = eq_int in
 instance (Eq Char) = eq_char in
-is_zero 1
+print_bool (is_zero 0)

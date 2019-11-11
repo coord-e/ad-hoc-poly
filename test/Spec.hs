@@ -30,5 +30,14 @@ testSample file = do
 main :: IO ()
 main = hspec $ do
   describe "Overload resolution" $ do
-    it "simple example" $ do
-      testSample "sample1.mlx1" `shouldReturn` "false"
+    it "handle constrainted instantiations" $ do
+      testSample "equality.mlx1" `shouldReturn` "false"
+
+    it "handle multi-parameter constraints" $ do
+      testSample "into.mlx1" `shouldReturn` "42"
+
+    it "handle dictionaries" $ do
+      testSample "number.mlx1" `shouldReturn` "13"
+
+    it "handle superclasses" $ do
+      testSample "superclass.mlx1" `shouldReturn` "true"
