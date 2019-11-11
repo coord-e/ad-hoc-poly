@@ -19,7 +19,8 @@ runML source = withSystemTempFile ".ml" $ \file h -> do
   hPutStr h =<< readFile "test/data/template.ml"
   hPutStr h source
   hClose h
-  strip <$> shelly (run "ocaml" [pack file])
+  out <- shelly . print_stdout False $ run "ocaml" ["-w", "-26", pack file]
+  return $ strip out
 
 testSample :: FilePath -> IO Text
 testSample file = do
