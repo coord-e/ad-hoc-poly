@@ -77,7 +77,7 @@ localInfer (S.Satisfy sc e1 e2) = do
   whenM (isOverlapping x sc') (throwError . TypeError $ OverlappingInstance x sc')
   (s1, e1') <- raise $ globalInfer e1
   -- TODO: Unify sc' to s1 to check instantiability
-  unlessM ((&&) <$> sc' `isInstance` s1 <*> s1 `isInstance` sc') (throwError . TypeError $ UnableToInstantiate x s1 sc')
+  unlessM (sc' `isInstance` s1) (throwError . TypeError $ UnableToInstantiate x s1 sc')
   n <- freshn x
   (t2, e2') <- withInstance x (sc', n) $ withBinding n s1 $ localInfer e2
   return (t2, T.Let n e1' e2')
