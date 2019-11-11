@@ -57,6 +57,7 @@ localInfer (S.Var x) = maybeM (maybeM (throwError $ TypeError $ UnboundVariable 
     overload = reader (views (context . overloads) (Map.lookup x))
     inferVarBound s = resolvePredicates (T.Var x) =<< instantiate s
     inferVarOver s = do
+      -- TODO: Predicates doesn't matter here?
       p <- instantiate s
       i <- fresh
       (t, e) <- resolvePredicates (T.Placeholder i) p
@@ -72,8 +73,10 @@ localInfer (S.Over s e) = do
   withOverload x s' $ localInfer e
 localInfer (S.Satisfy sc e1 e2) = do
   (x, sc') <- extractConstraint sc
+  -- TODO: Check overlapping instance in finding instantiations
   whenM (isOverlapping x sc') (throwError . TypeError $ OverlappingInstance x sc')
   (s1, e1') <- raise $ globalInfer e1
+  -- TODO: Unify sc' to s1 to check instantiability
   unlessM ((&&) <$> sc' `isInstance` s1 <*> s1 `isInstance` sc') (throwError . TypeError $ UnableToInstantiate x s1 sc')
   n <- freshn x
   (t2, e2') <- withInstance x (sc', n) $ withBinding n s1 $ localInfer e2
