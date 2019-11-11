@@ -57,13 +57,11 @@ localInfer (S.Var x) = maybeM (maybeM (throwError $ TypeError $ UnboundVariable 
     overload = reader (views (context . overloads) (Map.lookup x))
     inferVarBound s = resolvePredicates (T.Var x) =<< instantiate s
     inferVarOver s = do
-      -- TODO: Predicates doesn't matter here?
-      p <- instantiate s
+      PredType _ t <- instantiate s
       i <- fresh
-      (t, e) <- resolvePredicates (T.Placeholder i) p
       c <- reader (view context)
       tell $ Candidate i x t c
-      return (t, e)
+      return (t, T.Placeholder i)
 localInfer (S.Type x t e) = do
   k <- kind t
   s <- runEval t
