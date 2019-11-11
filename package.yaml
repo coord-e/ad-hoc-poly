@@ -62,3 +62,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - constraint-ad-hoc
+    - hspec
+    - shelly
+    - temporary
