@@ -16,6 +16,7 @@ assertRight (Right v)  = v
 
 runML :: String -> IO Text
 runML source = withSystemTempFile ".ml" $ \file h -> do
+  hPutStr h =<< readFile "test/data/template.ml"
   hPutStr h source
   hClose h
   shelly $ run "ocaml" [pack file]
