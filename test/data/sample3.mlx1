@@ -1,0 +1,11 @@
+type Num = ΛT. constraint numD :: (T -> T -> T, T -> T -> T) in
+overload (∀'a. Num 'a) in
+let add = fst numD in
+let mul = snd numD in
+
+instance (Num Int) = (add_int, mul_int) in
+instance (Num Float) = (add_float, mul_float) in
+
+let square = λx. mul x x in
+let x = add (square 3) (int_of_float (square 2.7)) in
+print_int x

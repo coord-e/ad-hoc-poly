@@ -1,0 +1,6 @@
+type Eq = ΛT. constraint eq :: T -> T -> Bool in
+overload (∀'a. Eq 'a) in
+instance (Eq Int) = eq_int in
+instance (Eq Char) = eq_char in
+instance (∀'a 'b. Eq 'a => Eq 'b => Eq ('a, 'b)) = λa. λb. and (eq (fst a) (fst b)) (eq (snd a) (snd b)) in
+print_bool (eq (1, 'a') (2, 'b'))

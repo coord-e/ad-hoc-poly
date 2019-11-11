@@ -1,0 +1,7 @@
+type Into = Λa. Λb. constraint into :: a -> b in
+overload (∀'a 'b. Into 'a 'b) in
+type Show = Λa. constraint show :: a -> String in
+overload (∀'a. Show 'a) in
+instance (∀'a. Show 'a => Into 'a String) = show in
+instance (Show Int) = string_of_int in
+print_string (into 1)
