@@ -45,13 +45,12 @@ runScanWaitList :: Subst -> T.Expr -> WaitList -> Eff '[Fresh, Reader Env, State
 runScanWaitList s e wl = scanWaitList s wl ([], e, IntMap.empty)
 
 
-globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (TypeScheme, T.Expr)
+globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr)
 globalInfer e = do
   (t, e', waitlist) <- runLocalInfer e
   subst <- getCurrentSubst
   (cs, e'', m) <- runScanWaitList subst e' waitlist
-  s <- generalize $ apply subst (PredType cs t)
-  return (s, resolvePlaceholders m e'')
+  return (apply subst (PredType cs t), resolvePlaceholders m e'')
 
 resolvePlaceholders :: PSubst -> T.Expr -> T.Expr
 resolvePlaceholders s = cata go

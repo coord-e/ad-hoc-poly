@@ -73,16 +73,23 @@ localInfer (S.Over s e) = do
   withOverload x s' $ localInfer e
 localInfer (S.Satisfy sc e1 e2) = do
   (x, sc') <- extractConstraint sc
+  -- TODO: Check sc' is instance of over(x) (for superclasses)
   -- TODO: Check overlapping instance in finding instantiations
   whenM (isOverlapping x sc') (throwError . TypeError $ OverlappingInstance x sc')
-  (s1, e1') <- raise $ globalInfer e1
-  -- TODO: Unify sc' to s1 to check instantiability
+  (p1, e1') <- raise $ globalInfer e1
+  unifySc p1 sc'
+  s1 <- generalize p1
   unlessM (sc' `isInstance` s1) (throwError . TypeError $ UnableToInstantiate x s1 sc')
   n <- freshn x
   (t2, e2') <- withInstance x (sc', n) $ withBinding n s1 $ localInfer e2
   return (t2, T.Let n e1' e2')
+  where
+    unifySc (PredType _ t1) sc' = do
+      PredType _ tc <- instantiate sc'
+      unify t1 tc
 localInfer (S.Let x e1 e2) = do
-  (s1, e1') <- raise $ globalInfer e1
+  (p1, e1') <- raise $ globalInfer e1
+  s1 <- generalize p1
   (t2, e2') <- withBinding x s1 $ localInfer e2
   return (t2, T.Let x e1' e2')
 

@@ -26,7 +26,7 @@ import qualified Data.Map                  as Map
 
 compile :: Config -> S.Expr -> Result T.Expr
 compile (Config bases lits binds) e = do
-  ((Forall _ (PredType cstrs _), e'), cs) <- run . runError . runState initConstraints . runReader (mkInitEnv bases lits) . runFresh' 0 . loadBindings binds $ globalInfer e
+  ((PredType cstrs _, e'), cs) <- run . runError . runState initConstraints . runReader (mkInitEnv bases lits) . runFresh' 0 . loadBindings binds $ globalInfer e
   _ <- runSolve cs
   unless (null cstrs) (Left . TypeError $ UnresolvedVariable cstrs)
   return e'
