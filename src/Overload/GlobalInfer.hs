@@ -17,8 +17,10 @@ import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
 import           Control.Eff.State.Strict
 import           Control.Lens
+import           Control.Monad             ((<=<))
 import           Data.Functor.Foldable
 import qualified Data.IntMap               as IntMap
+import           Data.Tuple.Extra          (uncurry3)
 
 
 type PSubst = IntMap.IntMap T.Expr
@@ -43,12 +45,14 @@ runScanWaitList :: Subst -> T.Expr -> WaitList -> Eff '[Fresh, Reader Env, State
 runScanWaitList s e wl = scanWaitList s wl ([], e, IntMap.empty)
 
 
-globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr)
-globalInfer e = do
-  (t, e', waitlist) <- runLocalInfer e
+processWaitList :: Type -> T.Expr -> WaitList -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr)
+processWaitList t e wl = do
   subst <- getCurrentSubst
-  (cs, e'', m) <- runScanWaitList subst e' waitlist
-  return (apply subst (PredType cs t), resolvePlaceholders m e'')
+  (cs, e', m) <- runScanWaitList subst e wl
+  return (apply subst (PredType cs t), resolvePlaceholders m e')
+
+globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr)
+globalInfer = uncurry3 processWaitList <=< runLocalInfer
 
 resolvePlaceholders :: PSubst -> T.Expr -> T.Expr
 resolvePlaceholders s = cata go
