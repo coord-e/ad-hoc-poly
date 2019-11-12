@@ -66,10 +66,6 @@ instance Report Context where
 
 
 -- Substitutable instances
-instance Substitutable Candidate where
-  apply s (Candidate i n t c) = Candidate i n (apply s t) (apply s c)
-  ftv (Candidate _ _ t c) = ftv t `Set.union` ftv c
-
 instance Substitutable Context where
   apply s (Context overs insts binds) = assert (go1 overs == overs) $
                                         assert (go2 insts == insts) $

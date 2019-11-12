@@ -25,31 +25,31 @@ type PSubst = IntMap.IntMap T.Expr
 
 
 -- TODO: implement without primitive recursion
-scanWaitList :: WaitList -> ([Constraint], T.Expr, PSubst) -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] ([Constraint], T.Expr, PSubst)
-scanWaitList [] acc = return acc
-scanWaitList (Candidate i x t ctx:wl) (acs, ae, m) = do
-  inst <- local (set context ctx) $ findInstantiationType x t
+scanWaitList :: Subst -> WaitList -> ([Constraint], T.Expr, PSubst) -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] ([Constraint], T.Expr, PSubst)
+scanWaitList _ [] acc = return acc
+scanWaitList subst (Candidate i x t ctx:wl) (acs, ae, m) = do
+  inst <- local (set context ctx) . findInstantiationType x $ apply subst t
   case inst of
     Just (_, xt) -> do
       (t', e', wl') <- local (set context ctx) $ runLocalInfer (S.Var xt)
-      subst <- unifyAndSolve t t'
-      scanWaitList (apply subst $ wl++wl') (acs, ae, IntMap.insert i e' m)
+      unify t t'
+      subst' <- getCurrentSubst
+      scanWaitList subst' (wl++wl') (acs, ae, IntMap.insert i e' m)
     Nothing -> do
       n <- freshn x
       let c = Constraint x t
-      scanWaitList wl (c:acs, T.Lam n ae, IntMap.insert i (T.Var n) m)
+      scanWaitList subst wl (c:acs, T.Lam n ae, IntMap.insert i (T.Var n) m)
 
-processWaitList :: T.Expr -> WaitList -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] ([Constraint], T.Expr)
-processWaitList e wl = do
-  (cs, e'', m) <- scanWaitList wl ([], e, IntMap.empty)
-  return (cs, resolvePlaceholders m e'')
+runScanWaitList :: Subst -> T.Expr -> WaitList -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] ([Constraint], T.Expr, PSubst)
+runScanWaitList s e wl = scanWaitList s wl ([], e, IntMap.empty)
+
 
 globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr)
 globalInfer e = do
-  (t, e', wl) <- runLocalInfer e
+  (t, e', waitlist) <- runLocalInfer e
   subst <- getCurrentSubst
-  (cs, e'') <- processWaitList e' $ apply subst wl
-  return (apply subst (PredType cs t), e'')
+  (cs, e'', m) <- runScanWaitList subst e' waitlist
+  return (apply subst (PredType cs t), resolvePlaceholders m e'')
 
 resolvePlaceholders :: PSubst -> T.Expr -> T.Expr
 resolvePlaceholders s = cata go
