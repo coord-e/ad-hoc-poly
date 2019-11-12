@@ -8,7 +8,6 @@ import           Parse.Type
 
 import           Control.Monad.Combinators.Expr
 import           Text.Megaparsec                hiding (satisfy)
-import qualified Text.Megaparsec.Char           as C
 import qualified Text.Megaparsec.Char.Lexer     as L
 
 
@@ -22,10 +21,10 @@ bool :: Parser Bool
 bool = (== "true") <$> choice [ rword "true", rword "false" ]
 
 quotedChar :: Parser Char
-quotedChar = between (symbol "'") (symbol "'") C.printChar
+quotedChar = between (symbol "'") (symbol "'") L.charLiteral
 
 quotedString :: Parser String
-quotedString = between (symbol "\"") (symbol "\"") $ many C.printChar
+quotedString = symbol "\"" >> manyTill L.charLiteral (symbol "\"")
 
 term :: Parser Expr
 term = try (parens expr)
