@@ -73,15 +73,18 @@ localInfer (S.Satisfy sc e1 e2) = do
   (x, sc') <- extractConstraint sc
   ov <- fromMaybeM (throwError . TypeError $ NotOverloadedInstance x) $ reader (views (context . overloads) (Map.lookup x))
   unlessM (sc' `isInstance` ov) (throwError . TypeError $ InvalidInstance x ov sc')
-  (p1, e1') <- raise $ globalInfer e1
-  unifySc p1 sc'
+
+  (t, e1i, wl) <- raise $ runLocalInfer e1
+  unifySc t sc'
+  (p1, e1') <- raise $ processWaitList t e1i wl
   s1 <- generalize p1
+
   unlessM (sc' `isInstance` s1) (throwError . TypeError $ UnableToInstantiate x s1 sc')
   n <- freshn x
   (t2, e2') <- withInstance x (sc', n) $ withBinding n s1 $ localInfer e2
   return (t2, T.Let n e1' e2')
   where
-    unifySc (PredType _ t1) sc' = do
+    unifySc t1 sc' = do
       PredType _ tc <- instantiate sc'
       unify t1 tc
 localInfer (S.Let x e1 e2) = do
