@@ -32,8 +32,7 @@ scanWaitList subst (Candidate i x t ctx:wl) (acs, ae, m) = do
   case inst of
     Just (_, xt) -> do
       (t', e', wl') <- local (set context ctx) $ runLocalInfer (S.Var xt)
-      unify t t'
-      subst' <- getCurrentSubst
+      subst' <- unifyAndSolve t t'
       scanWaitList subst' (wl++wl') (acs, ae, IntMap.insert i e' m)
     Nothing -> do
       n <- freshn x

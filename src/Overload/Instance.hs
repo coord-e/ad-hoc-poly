@@ -34,7 +34,7 @@ isInstancePred (PredType cs1 t1) (PredType cs2 t2) = maybe (return False) checkA
 
 isInstanceType :: Type -> Type -> Maybe Subst
 isInstanceType t1 t2 = do
-  s@(Subst m) <- eitherToMaybe $ runUnifyAndSolve t2 t1
+  s@(Subst m) <- eitherToMaybe $ runUnifies t2 t1
   toMaybe (disjointKeys m $ ftv t1) s
 
 findInstantiation :: (Member (Exc Error) r, Member (Reader Env) r) => S.Name -> TypeScheme -> Eff r (Maybe (TypeScheme, T.Name))
