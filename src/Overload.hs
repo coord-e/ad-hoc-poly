@@ -37,7 +37,7 @@ mkInitEnv m = Env initContext kindenv typeenv
   where
     kindenv = Map.map evalKind m
     typeenv = Map.mapWithKey go m
-    go k _ = PredSem [] . SType $ TBase k
+    go = const . PredSem [] . SType . TBase
 
 loadBindings :: (Member Fresh r, Member (Reader Env) r) => Map.Map String S.TypeScheme -> Eff r a -> Eff r a
 loadBindings = flip $ Map.foldrWithKey go
