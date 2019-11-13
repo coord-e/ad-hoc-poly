@@ -5,7 +5,7 @@ import           System.IO        (hClose, hPutStr)
 import           System.IO.Temp   (withSystemTempFile)
 import           Test.Hspec
 
-import           Compile          (compileFile)
+import           Compile          (compileIntermediateFile)
 import           Reporting.Report (report)
 import           Reporting.Result (Result)
 import           Reporting.Error (Error)
@@ -28,7 +28,7 @@ runML source = withSystemTempFile ".ml" $ \file h -> do
   return $ strip out
 
 compileFile' :: FilePath -> IO (Result String)
-compileFile' file = compileFile (Just "test/data/env.yaml") ("test/data/" ++ file)
+compileFile' file = compileIntermediateFile (Just "test/data/env.yaml") ("test/data/" ++ file)
 
 testSample :: FilePath -> IO Text
 testSample file = do
