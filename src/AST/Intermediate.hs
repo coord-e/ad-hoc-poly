@@ -3,19 +3,15 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
-module AST.Source where
+module AST.Intermediate where
 
+import AST.Name
 import           Reporting.Report
 
 import           Control.Lens.TH
 import           Data.Functor.Foldable
 import           Data.Functor.Foldable.TH
 import           Data.List                (intercalate)
-
-
-type TVarName = String
-type TypeName = String
-type Name = String
 
 
 data Kind
