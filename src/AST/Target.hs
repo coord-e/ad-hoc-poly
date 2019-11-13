@@ -5,7 +5,7 @@
 {-# LANGUAGE TypeFamilies      #-}
 module AST.Target where
 
-import AST.Name
+import           AST.Name
 
 import           Data.Functor.Foldable.TH
 

@@ -1,30 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Parse.Expr where
+module Parse.Intermediate where
 
-import           AST.Source                     hiding (type_)
+import           AST.Intermediate
 import           Parse.Internal
 import           Parse.Name
 import           Parse.Type
 
 import           Control.Monad.Combinators.Expr
 import           Text.Megaparsec                hiding (satisfy)
-import qualified Text.Megaparsec.Char.Lexer     as L
 
-
-integer :: Parser Int
-integer = lexeme L.decimal
-
-real :: Parser Double
-real = try $ lexeme L.float
-
-bool :: Parser Bool
-bool = (== "true") <$> choice [ rword "true", rword "false" ]
-
-quotedChar :: Parser Char
-quotedChar = between (symbol "'") (symbol "'") L.charLiteral
-
-quotedString :: Parser String
-quotedString = symbol "\"" >> manyTill L.charLiteral (symbol "\"")
 
 term :: Parser Expr
 term = try (parens expr)
