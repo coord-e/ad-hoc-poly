@@ -1,0 +1,9 @@
+type Eq = ΛT. constraint eq :: T -> T -> Bool in
+overload (∀'a. Eq 'a) in
+type Zeroable = ΛT. Eq T => constraint is_zero :: T -> Bool in
+overload (∀'a. Zeroable 'a) in
+instance (Zeroable Int) = λx. eq x 0 in
+instance (Zeroable Float) = λx. eq x 0.0 in
+instance (Eq Int) = eq_int in
+instance (Eq Char) = eq_char in
+print_bool (is_zero 0.0)
