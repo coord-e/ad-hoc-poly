@@ -1,6 +1,6 @@
 module Reporting.Error.Kind where
 
-import qualified AST.Source       as S
+import           AST.Name
 import           Overload.Kind
 import           Reporting.Report
 
@@ -8,7 +8,7 @@ import           Reporting.Report
 data KindError
   = UnificationFail Kind Kind
   | UnableToApply Kind Kind
-  | UnboundName S.TypeName
+  | UnboundName TypeName
   deriving Show
 
 

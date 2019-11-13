@@ -2,7 +2,8 @@
 {-# LANGUAGE TemplateHaskell  #-}
 module Overload.TypeEval where
 
-import qualified AST.Source                as S
+import           AST.Name
+import qualified AST.Type                  as S
 import           Overload.Env
 import           Overload.Type
 import           Overload.Var
@@ -15,7 +16,7 @@ import           Control.Lens
 import qualified Data.Map                  as Map
 
 
-type TyVarEnv = Map.Map S.TVarName TyVar
+type TyVarEnv = Map.Map TVarName TyVar
 
 data TypeEvalEnv
   = TypeEvalEnv { _typeEnv_ :: TypeEnv
@@ -47,7 +48,7 @@ expectTy :: Sem -> Type
 expectTy (SType t) = t
 expectTy _         = error "a type is expected; invalid kind"
 
-expectClos :: Sem -> (S.TypeName, S.Type, TypeEnv)
+expectClos :: Sem -> (TypeName, S.Type, TypeEnv)
 expectClos (SClosure x t env) = (x, t, env)
 expectClos _                  = error "an abstraction is expected; invalid kind"
 

@@ -4,7 +4,7 @@ import           Config           (Config, loadConfigFile,
                                    loadDefaultConfigFile)
 import qualified Emit             (emit)
 import qualified Overload         (compile)
-import qualified Parse            (parse)
+import qualified Parse            (parseIntermediate)
 import           Reporting.Result (Result)
 
 import           Control.Monad    ((<=<))
@@ -19,4 +19,4 @@ compileFile mconfig file = do
   return $ flip compile content =<< config
 
 compile :: Config -> Text -> Result String
-compile c = fmap Emit.emit . Overload.compile c <=< Parse.parse
+compile c = fmap Emit.emit . Overload.compile c <=< Parse.parseIntermediate

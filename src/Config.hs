@@ -3,7 +3,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Config where
 
-import           AST.Source       hiding (type_)
+import           AST.Kind
+import           AST.Type         hiding (type_)
 import qualified Parse.Internal   as P (Parser)
 import           Parse.Kind       (kind)
 import           Parse.Type       (typeScheme, type_)

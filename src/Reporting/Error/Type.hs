@@ -1,6 +1,6 @@
 module Reporting.Error.Type where
 
-import qualified AST.Source       as S
+import           AST.Name
 import           Data.List        (intercalate)
 import           Overload.Type
 import           Reporting.Report
@@ -9,12 +9,12 @@ import           Reporting.Report
 data TypeError
   = UnificationFail Type Type
   | InfiniteType TyVar Type
-  | UnableToInstantiate S.Name TypeScheme TypeScheme
-  | InvalidInstance S.Name TypeScheme TypeScheme
-  | OverlappingInstance S.Name TypeScheme
-  | NotOverloadedInstance S.Name
+  | UnableToInstantiate Name TypeScheme TypeScheme
+  | InvalidInstance Name TypeScheme TypeScheme
+  | OverlappingInstance Name TypeScheme
+  | NotOverloadedInstance Name
   | UnresolvedVariable [Constraint]
-  | UnboundVariable S.Name
+  | UnboundVariable Name
   deriving Show
 
 

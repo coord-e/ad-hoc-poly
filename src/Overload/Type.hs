@@ -7,7 +7,8 @@
 {-# LANGUAGE TypeFamilies      #-}
 module Overload.Type where
 
-import qualified AST.Source               as S
+import           AST.Name
+import qualified AST.Type                 as S
 import           Reporting.Report
 
 import           Control.Lens.TH
@@ -33,7 +34,7 @@ makeBaseFunctor ''Type
 
 -- normalized type (Constraint kind)
 data Constraint
-  = Constraint { _name        :: S.TypeName
+  = Constraint { _name        :: TypeName
                , _requirement :: Type }
   deriving (Show, Eq)
 
@@ -58,7 +59,7 @@ scheme :: Type -> TypeScheme
 scheme = Forall [] . PredType []
 
 
-type TypeEnv = Map.Map S.TypeName PredSem
+type TypeEnv = Map.Map TypeName PredSem
 
 initTypeEnv :: TypeEnv
 initTypeEnv = Map.empty
@@ -67,7 +68,7 @@ initTypeEnv = Map.empty
 data Sem
   = SType Type
   | SConstraint Constraint
-  | SClosure S.TypeName S.Type TypeEnv
+  | SClosure TypeName S.Type TypeEnv
 
 data PredSem
   = PredSem { _constraintsS :: [Constraint]
