@@ -14,4 +14,5 @@ import           Control.Eff.Reader.Strict
 import           Control.Eff.State.Strict
 
 
+processWaitList :: Type -> T.Expr -> WaitList -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr)
 globalInfer :: S.Expr -> Eff '[Fresh, Reader Env, State Constraints, Exc Error] (PredType, T.Expr)

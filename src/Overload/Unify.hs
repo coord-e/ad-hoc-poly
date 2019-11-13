@@ -7,6 +7,7 @@ import           Overload.Subst
 import           Overload.Type
 import           Reporting.Error
 import           Reporting.Error.Type
+import           Reporting.Result
 
 import           Control.Eff
 import           Control.Eff.Exception
@@ -37,6 +38,12 @@ getCurrentSubst = do
   modify $ set solved s
   return s
 
+unifyAndSolve :: (Member (State Constraints) r, Member (Exc Error) r) => Type -> Type -> Eff r Subst
+unifyAndSolve t1 t2 = unify t1 t2 >> getCurrentSubst
+
+
+runUnifies :: Type -> Type -> Result Subst
+runUnifies t1 t2 = run . runError $ unifies t1 t2
 
 -- NOTE: left-biased
 unifies :: Member (Exc Error) r => Type -> Type -> Eff r Subst
@@ -60,10 +67,3 @@ occursIn a t = a `Set.member` ftv t
 
 throwUniFail :: Member (Exc Error) r => Type -> Type -> Eff r a
 throwUniFail t1 t2 = throwError . TypeError $ UnificationFail t1 t2
-
-
-unifyAndSolve :: Member (Exc Error) r => Type -> Type -> Eff r Subst
-unifyAndSolve = unifies
-
-runUnifyAndSolve :: Type -> Type -> Either Error Subst
-runUnifyAndSolve t1 t2 = run . runError $ unifyAndSolve t1 t2
