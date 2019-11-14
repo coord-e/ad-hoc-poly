@@ -5,7 +5,7 @@ import           System.IO        (hClose, hPutStr)
 import           System.IO.Temp   (withSystemTempFile)
 import           Test.Hspec
 
-import           Compile          (compileIntermediateFile)
+import           Compile          (compileIntermediateFile, compileSourceFile)
 import           Reporting.Report (report)
 import           Reporting.Result (Result)
 import           Reporting.Error (Error)
@@ -27,23 +27,31 @@ runML source = withSystemTempFile ".ml" $ \file h -> do
   out <- shelly . print_stdout False $ run "ocaml" ["-w", "-26", pack file]
   return $ strip out
 
-compileFile' :: FilePath -> IO (Result String)
-compileFile' file = compileIntermediateFile (Just "test/data/env.yaml") ("test/data/" ++ file)
+type Compiler = Maybe FilePath -> FilePath -> IO (Result String)
 
-testSample :: FilePath -> IO Text
-testSample file = do
-  result <- assertRight <$> compileFile' file
+compileSampleWith :: Compiler -> FilePath -> IO (Result String)
+compileSampleWith compiler file = compiler (Just "test/data/env.yaml") ("test/data/" ++ file)
+
+testSampleWith :: Compiler -> FilePath -> IO Text
+testSampleWith compiler file = do
+  result <- assertRight <$> compileSampleWith compiler file
   runML result
 
-testErrorSample :: FilePath -> IO String
-testErrorSample file = report . assertLeft <$> compileFile' file
+testErrorSampleWith :: Compiler -> FilePath -> IO String
+testErrorSampleWith compiler file = report . assertLeft <$> compileSampleWith compiler file
 
 shouldReturnContain :: (HasCallStack, Show a, Eq a) => IO [a] -> [a] -> Expectation
 shouldReturnContain a p = flip shouldContain p =<< a
 
 
 main :: IO ()
-main = hspec $
+main = hspec $ do
+  testIntermediateSyntax
+  testSourceSyntax
+
+
+testIntermediateSyntax :: SpecWith ()
+testIntermediateSyntax =
   describe "Overload resolution" $ do
     it "handle constrainted instantiations" $
       testSample "equality.mlx1" `shouldReturn` "false"
@@ -65,3 +73,24 @@ main = hspec $
 
     it "fails with unmet superclass" $
       testErrorSample "superclass_err.mlx1" `shouldReturnContain` "Unresolved constraint"
+  where
+    testSample = testSampleWith compileIntermediateFile
+    testErrorSample = testErrorSampleWith compileIntermediateFile
+
+
+testSourceSyntax :: SpecWith ()
+testSourceSyntax =
+  describe "Class syntax" $ do
+    it "handle constrainted instantiations" $
+      testSample "equality.mlx2" `shouldReturn` "false"
+
+    it "handle multi-parameter constraints" $
+      testSample "into.mlx2" `shouldReturn` "42"
+
+    it "handle dictionaries" $
+      testSample "number.mlx2" `shouldReturn` "13"
+
+    it "handle superclasses" $
+      testSample "superclass.mlx2" `shouldReturn` "true"
+  where
+    testSample = testSampleWith compileSourceFile

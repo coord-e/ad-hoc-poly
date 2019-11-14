@@ -1,0 +1,19 @@
+class<T> Eq {
+  eq :: T -> T -> Bool
+} in
+class<T> Zeroable where T: Eq {
+  is_zero :: T -> Bool
+} in
+impl Zeroable<Int> {
+  is_zero = \x. eq x 0
+} in
+impl Zeroable<Float> {
+  is_zero = \x. eq x 0.0
+} in
+impl Eq<Int> {
+  eq = eq_int
+} in
+impl Eq<Char> {
+  eq = eq_char
+} in
+print_bool (is_zero 0)
