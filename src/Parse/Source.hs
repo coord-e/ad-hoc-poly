@@ -91,11 +91,11 @@ impl = do
   tgt <- type_ `sepBy1` symbol ","
   symbol ">"
   cs <- where_ <|> pure []
-  ms <- between (symbol "{") (symbol "}") $ method `sepEndBy1` symbol ","
+  ms <- between (symbol "{") (symbol "}") $ impl' `sepEndBy1` symbol ","
   rword_ "in"
   Impl (ImplDecl as cls tgt cs ms) <$> expr
   where
-    method = do
+    impl' = do
       n <- name
       symbol "="
       e <- expr
