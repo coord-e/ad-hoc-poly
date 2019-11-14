@@ -40,7 +40,7 @@ convert (S.Impl impl e) = convertImpl impl =<< convert e
 convertClass :: Member (Reader Env) r => S.ClassDecl -> Eff r T.Expr -> Eff r T.Expr
 convertClass (S.ClassDecl as cls cs ms) m = eType <$> local (Map.insert cls names) m
   where
-    dName = cls ++ "D"
+    dName = "d" ++ cls
     tName = cls
     len = length ms
     (names, dTuple) = second T.TTuple $ unzip ms
