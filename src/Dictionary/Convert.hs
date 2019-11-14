@@ -16,6 +16,7 @@ import           Control.Eff.Reader.Strict
 import           Control.Lens.Indexed       (ifoldr)
 import           Control.Monad.Extra        (fromMaybeM)
 import           Data.Bifunctor
+import           Data.Functor.Foldable
 import qualified Data.Map                   as Map
 
 
@@ -61,10 +62,17 @@ convertImpl (S.ImplDecl as cls tgt cs ms) e = do
     tName = cls
     tConstraint = foldl T.TApp (T.TName tName) tgt
     tPredicated = foldr (\(t, c) -> T.TPredicate (T.TApp (T.TName c) t)) tConstraint cs
-    tScheme = T.Forall as tPredicated
+    tScheme = T.Forall as $ varify as tPredicated
     tSatisfy tup = T.Satisfy tScheme tup e
     buildTuple = mapM . findImpl
     findImpl impls k = maybe (throwError . DictionaryError $ MissingImpl cls k) pure $ Map.lookup k impls
+
+
+varify :: [String] -> T.Type -> T.Type
+varify as = cata go
+  where
+    go (T.TNameF x) | x `elem` as = T.TVar x
+    go t            = embed t
 
 
 secondM :: Functor f => (b -> f c) -> (a, b) -> f (a, c)
