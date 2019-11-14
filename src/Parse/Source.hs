@@ -72,7 +72,7 @@ class_ = do
   as <- intros
   cls <- typeName
   cs <- where_ <|> pure []
-  ms <- between (symbol "{") (symbol "}") $ method `sepEndBy` symbol ","
+  ms <- between (symbol "{") (symbol "}") $ method `sepEndBy1` symbol ","
   rword_ "in"
   Class (ClassDecl as cls cs ms) <$> expr
   where
@@ -91,7 +91,7 @@ impl = do
   tgt <- type_ `sepBy1` symbol ","
   symbol ">"
   cs <- where_ <|> pure []
-  ms <- between (symbol "{") (symbol "}") $ method `sepEndBy` symbol ","
+  ms <- between (symbol "{") (symbol "}") $ method `sepEndBy1` symbol ","
   rword_ "in"
   Impl (ImplDecl as cls tgt cs ms) <$> expr
   where

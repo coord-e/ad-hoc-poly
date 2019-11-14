@@ -48,6 +48,8 @@ convertClass (S.ClassDecl as cls cs ms) m = eType <$> local (Map.insert cls name
     getter = case length ms of
       1 -> \i -> assert (i == 0) id
       n -> T.Nth n
+    -- NOTE: empty declaration cannot be parsed
+    toDictTy []  = error "empty decl"
     toDictTy [x] = x
     toDictTy ts  = T.TTuple ts
     (names, dTuple) = second toDictTy $ unzip ms
@@ -72,6 +74,8 @@ convertImpl (S.ImplDecl as cls tgt cs ms) e = do
     tSatisfy tup = T.Satisfy tScheme tup e
     buildDict = mapM . findImpl
     findImpl impls k = maybe (throwError . DictionaryError $ MissingImpl cls k) pure $ Map.lookup k impls
+    -- NOTE: empty implementation cannot be parsed
+    toDict []  = error "empty impl"
     toDict [x] = x
     toDict xs  = T.Tuple xs
 
