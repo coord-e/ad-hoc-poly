@@ -87,8 +87,9 @@ impl = do
   rword_ "impl"
   as <- intros
   cls <- typeName
-  rword_ "for"
-  tgt <- type_
+  symbol "<"
+  tgt <- type_ `sepBy1` symbol ","
+  symbol ">"
   cs <- where_ <|> pure []
   ms <- between (symbol "{") (symbol "}") $ method `sepEndBy` symbol ","
   rword_ "in"

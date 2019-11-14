@@ -26,7 +26,7 @@ data ClassDecl
 data ImplDecl
   = ImplDecl { _idIntros     :: [TypeName]
              , _idClass      :: TypeName
-             , _idType       :: Type
+             , _idTypes      :: [Type]
              , _idPredicates :: [(Type, TypeName)]
              , _idMethods    :: [(Name, Expr)] }
              deriving (Show, Eq)
@@ -67,10 +67,11 @@ instance Report ClassDecl where
       ms' = intercalate ",\n" $ map (\(n, t) -> n ++ " :: " ++ report t) ms
 
 instance Report ImplDecl where
-  report (ImplDecl as cls tgt cs ms) = "impl<" ++ reportVars as ++ "> " ++ cls ++ " for " ++ report tgt
+  report (ImplDecl as cls tgt cs ms) = "impl<" ++ reportVars as ++ "> " ++ cls ++ "<" ++ tgt' ++ ">"
                                      ++ " where " ++ reportPreds cs ++ " {\n" ++ ms' ++ "}"
     where
       ms' = intercalate ",\n" $ map (\(n, me) -> n ++ " = " ++ report me) ms
+      tgt' = intercalate ", " $ map report tgt
 
 instance Report Expr where
   report = cata go
