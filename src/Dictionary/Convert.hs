@@ -3,36 +3,48 @@ module Dictionary.Convert where
 
 import qualified AST.Intermediate          as T
 import qualified AST.Source                as S
+import qualified AST.Type                  as T
 import           Dictionary.Env
 
 import           Control.Eff
 import           Control.Eff.Reader.Strict
-import           Control.Monad             ((<=<))
-import           Data.Functor.Foldable
+import           Control.Lens.Indexed      (ifoldr)
+import           Data.Bifunctor
+import qualified Data.Map                  as Map
 
 
 runConvert :: S.Expr -> T.Expr
 runConvert = run . runReader initEnv . convert
 
 convert :: Member (Reader Env) r => S.Expr -> Eff r T.Expr
-convert = cataM go
+convert (S.Int i)       = return $ T.Int i
+convert (S.Char c)      = return $ T.Char c
+convert (S.Str s)       = return $ T.Str s
+convert (S.Real f)      = return $ T.Real f
+convert (S.Bool b)      = return $ T.Bool b
+convert (S.Var x)       = return $ T.Var x
+convert (S.App a b)     = T.App <$> convert a <*> convert b
+convert (S.Lam x body)  = T.Lam x <$> convert body
+convert (S.Tuple xs)    = T.Tuple <$> mapM convert xs
+convert (S.Let x e1 e2) = T.Let x <$> convert e1 <*> convert e2
+convert (S.Class cls e) = convertClass cls $ convert e
+convert (S.Impl impl e) = convertImpl impl =<< convert e
+
+
+convertClass :: Member (Reader Env) r => S.ClassDecl -> Eff r T.Expr -> Eff r T.Expr
+convertClass (S.ClassDecl as cls cs ms) m = eType <$> local (Map.insert cls names) m
   where
-    go (S.IntF i)       = return $ T.Int i
-    go (S.CharF c)      = return $ T.Char c
-    go (S.StrF s)       = return $ T.Str s
-    go (S.RealF f)      = return $ T.Real f
-    go (S.BoolF b)      = return $ T.Bool b
-    go (S.VarF x)       = return $ T.Var x
-    go (S.AppF a b)     = return $ T.App a b
-    go (S.LamF x body)  = return $ T.Lam x body
-    go (S.TupleF xs)    = return $ T.Tuple xs
-    go (S.LetF x e1 e2) = return $ T.Let x e1 e2
-    go (S.ClassF cls e) = undefined
-    go (S.ImplF impl e) = undefined
+    dName = cls ++ "D"
+    tName = cls
+    len = length ms
+    (names, dTuple) = second T.TTuple $ unzip ms
+    tConstraint = T.TConstraint dName dTuple
+    tPredicated = foldr (\(t, c) -> T.TPredicate (T.TApp (T.TName c) t)) tConstraint cs
+    tCon = foldr T.TLam tPredicated as
+    tScheme = T.Forall as (foldl (\acc -> T.TApp acc . T.TVar) (T.TName tName) as)
+    eType = T.Type tName tCon . eOver
+    eOver = T.Over tScheme . eLet
+    eLet e = ifoldr (\i x -> T.Let x (T.Nth len i (T.Var dName))) e names
 
-
-cataM
-  :: (Monad m, Traversable (Base t), Recursive t)
-  => (Base t a -> m a) -> t -> m a
-cataM alg = c where
-  c = alg <=< traverse c . project
+convertImpl :: Member (Reader Env) r => S.ImplDecl -> T.Expr -> Eff r T.Expr
+convertImpl = undefined
