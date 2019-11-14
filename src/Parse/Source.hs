@@ -74,7 +74,7 @@ class_ = do
   cs <- where_ <|> pure []
   ms <- between (symbol "{") (symbol "}") $ method `sepEndBy` symbol ","
   rword_ "in"
-  Class as cls cs ms <$> expr
+  Class (ClassDecl as cls cs ms) <$> expr
   where
     method = do
       n <- name
@@ -92,7 +92,7 @@ impl = do
   cs <- where_ <|> pure []
   ms <- between (symbol "{") (symbol "}") $ method `sepEndBy` symbol ","
   rword_ "in"
-  Impl as cls tgt cs ms <$> expr
+  Impl (ImplDecl as cls tgt cs ms) <$> expr
   where
     method = do
       n <- name

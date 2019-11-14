@@ -9,9 +9,27 @@ import           AST.Name
 import           AST.Type
 import           Reporting.Report
 
+import           Control.Lens.TH
 import           Data.Functor.Foldable
 import           Data.Functor.Foldable.TH
 import           Data.List                (intercalate)
+
+
+data ClassDecl
+  = ClassDecl { _cdIntros     :: [TypeName]
+              , _cdClass      :: TypeName
+              , _cdPredicates :: [(Type, TypeName)]
+              , _cdMethods    :: [(Name, Type)] }
+              deriving (Show, Eq)
+
+
+data ImplDecl
+  = ImplDecl { _idIntros     :: [TypeName]
+             , _idClass      :: TypeName
+             , _idType       :: Type
+             , _idPredicates :: [(Type, TypeName)]
+             , _idMethods    :: [(Name, Expr)] }
+             deriving (Show, Eq)
 
 
 data Expr
@@ -25,19 +43,38 @@ data Expr
   | Lam Name Expr
   | Tuple [Expr]
   | Let Name Expr Expr
-  | Class [TypeName] TypeName [(Type, TypeName)] [(Name, Type)] Expr
-  | Impl [TypeName] TypeName Type [(Type, TypeName)] [(Name, Expr)] Expr
+  | Class ClassDecl Expr
+  | Impl ImplDecl Expr
   deriving (Show, Eq)
 
+
+makeLenses ''ClassDecl
+makeLenses ''ImplDecl
 makeBaseFunctor ''Expr
 
 
 -- Report instances
+reportVars :: [TypeName] -> String
+reportVars  = intercalate ", "
+
+reportPreds :: [(Type, TypeName)] -> String
+reportPreds = intercalate ", " . map (\(t, n) -> report t ++ ": " ++ n)
+
+instance Report ClassDecl where
+  report (ClassDecl as cls cs ms) = "class<" ++ reportVars as ++ "> " ++ cls
+                                  ++ " where " ++ reportPreds cs ++ " {\n" ++ ms' ++ "}"
+    where
+      ms' = intercalate ",\n" $ map (\(n, t) -> n ++ " :: " ++ report t) ms
+
+instance Report ImplDecl where
+  report (ImplDecl as cls tgt cs ms) = "impl<" ++ reportVars as ++ "> " ++ cls ++ " for " ++ report tgt
+                                     ++ " where " ++ reportPreds cs ++ " {\n" ++ ms' ++ "}"
+    where
+      ms' = intercalate ",\n" $ map (\(n, me) -> n ++ " = " ++ report me) ms
+
 instance Report Expr where
   report = cata go
     where
-      reportVars  = intercalate ", "
-      reportPreds = intercalate ", " . map (\(t, n) -> report t ++ ": " ++ n)
       go (IntF i)       = show i
       go (CharF c)      = show c
       go (StrF s)       = show s
@@ -48,11 +85,5 @@ instance Report Expr where
       go (LamF x e)     = paren ("λ" ++ x ++ ". " ++ e)
       go (TupleF xs)    = paren (intercalate ", " xs)
       go (LetF x e1 e2) = "let " ++ x ++ " = " ++ e1 ++ " in\n" ++ e2
-      go (ClassF as cls cs ms e) = "class<" ++ reportVars as ++ "> " ++ cls
-                                   ++ " where " ++ reportPreds cs ++ " {\n" ++ ms' ++ "} in\n" ++ e
-        where
-          ms' = intercalate ",\n" $ map (\(n, t) -> n ++ " :: " ++ report t) ms
-      go (ImplF as cls tgt cs ms e) = "impl<" ++ reportVars as ++ "> " ++ cls ++ " for " ++ report tgt
-                                      ++ " where " ++ reportPreds cs ++ " {\n" ++ ms' ++ "} in\n" ++ e
-        where
-          ms' = intercalate ",\n" $ map (\(n, me) -> n ++ " = " ++ me) ms
+      go (ClassF cls e) = report cls ++ " in\n" ++ e
+      go (ImplF impl e) = report impl ++ " in\n" ++ e
