@@ -1,0 +1,13 @@
+class<T> Eq {
+  eq :: T -> T -> Bool
+} in
+impl Eq<Int> {
+  eq = eq_int
+} in
+impl Eq<Char> {
+  eq = eq_char
+} in
+impl<T, U> Eq<(T, U)> where T: Eq, U: Eq {
+  eq = \a. \b. andb (eq (fst a) (fst b)) (eq (snd a) (snd b))
+} in
+print_bool (eq (1, 'a') (2, 'b'))

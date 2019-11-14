@@ -1,8 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Overload.Env where
 
-import qualified AST.Source        as S
-import qualified AST.Target        as T
+import           AST.Name
 import           Config
 import           Overload.Kind
 import           Overload.Subst
@@ -16,9 +15,9 @@ import qualified Data.Set          as Set
 
 
 data Context
-  = Context { _overloads      :: Map.Map S.Name TypeScheme
-            , _instantiations :: Map.Map S.Name [(TypeScheme, T.Name)]
-            , _bindings       :: Map.Map S.Name TypeScheme }
+  = Context { _overloads      :: Map.Map Name TypeScheme
+            , _instantiations :: Map.Map Name [(TypeScheme, Name)]
+            , _bindings       :: Map.Map Name TypeScheme }
 
 makeLenses ''Context
 
@@ -37,7 +36,7 @@ makeLenses ''Env
 
 data Candidate
   = Candidate { _id_          :: Int
-              , _name         :: S.Name
+              , _name         :: Name
               , _type_        :: Type
               , _savedContext :: Context }
 

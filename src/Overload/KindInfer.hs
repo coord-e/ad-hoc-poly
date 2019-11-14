@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Overload.KindInfer where
 
-import qualified AST.Source                as S
+import qualified AST.Type                  as S
 import           Overload.Env
 import           Overload.Kind
 import           Reporting.Error

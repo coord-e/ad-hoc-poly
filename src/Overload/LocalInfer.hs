@@ -3,8 +3,10 @@
 {-# LANGUAGE TupleSections    #-}
 module Overload.LocalInfer where
 
-import qualified AST.Source                as S
+import qualified AST.Intermediate          as S
+import           AST.Name
 import qualified AST.Target                as T
+import qualified AST.Type                  as S
 import           Config                    (LiteralTypes (..))
 import           Overload.Env
 import {-# SOURCE #-} Overload.GlobalInfer
@@ -29,6 +31,7 @@ import           Control.Eff.State.Strict
 import           Control.Eff.Writer.Strict
 import           Control.Exception         (assert)
 import           Control.Lens
+import           Control.Monad             (replicateM)
 import           Control.Monad.Extra       (fromMaybeM, maybeM, unlessM)
 import           Data.Foldable             (foldlM)
 import qualified Data.Map                  as Map
@@ -40,6 +43,11 @@ localInfer (S.Char c)   = (, T.Char c) <$> literalType char
 localInfer (S.Str s)    = (, T.Str s) <$> literalType string
 localInfer (S.Real f)   = (, T.Real f) <$> literalType real
 localInfer (S.Bool b)   = (, T.Bool b) <$> literalType boolean
+localInfer (S.Nth n i e)  = do
+  ts <- replicateM n (TVar <$> freshv)
+  (t, e') <- localInfer e
+  unify (TTuple ts) t
+  return (ts !! i, T.Nth n i e')
 localInfer (S.Tuple xs) = bimap TTuple T.Tuple . unzip <$> mapM localInfer xs
 localInfer (S.Lam x e)  = do
   tv <- TVar <$> freshv
@@ -110,7 +118,7 @@ resolvePredicates e (PredType cs t) = do
       unify tx tc
       return (T.App ae ex)
 
-extractConstraint :: (Member (Exc Error) r, Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff r (S.Name, TypeScheme)
+extractConstraint :: (Member (Exc Error) r, Member Fresh r, Member (Reader Env) r) => S.TypeScheme -> Eff r (Name, TypeScheme)
 extractConstraint s@(S.Forall _ t) = do
   kindTo t K.Constraint
   SForall as (PredSem cs t') <- runSchemeEval s
@@ -121,16 +129,16 @@ extractConstraint s@(S.Forall _ t) = do
     extract _               = error "something went wrong in kinding"
 
 
-withInstance :: Member (Reader Env) r => S.Name -> (TypeScheme, T.Name) -> Eff r a -> Eff r a
+withInstance :: Member (Reader Env) r => Name -> (TypeScheme, Name) -> Eff r a -> Eff r a
 withInstance x i = local (over (context . instantiations) (adjustWithDefault (i:) [i] x))
 
-withBinding :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
+withBinding :: Member (Reader Env) r => Name -> TypeScheme -> Eff r a -> Eff r a
 withBinding x s = local (over (context . bindings) (Map.insert x s))
 
-withBindingType :: Member (Reader Env) r => S.Name -> Type -> Eff r a -> Eff r a
+withBindingType :: Member (Reader Env) r => Name -> Type -> Eff r a -> Eff r a
 withBindingType x = withBinding x . scheme
 
-withOverload :: Member (Reader Env) r => S.Name -> TypeScheme -> Eff r a -> Eff r a
+withOverload :: Member (Reader Env) r => Name -> TypeScheme -> Eff r a -> Eff r a
 withOverload x t = local (over (context . overloads) (Map.insert x t))
 
 literalType :: (Member (Exc Error) r, Member (Reader Env) r, Member Fresh r) => (LiteralTypes -> S.Type) -> Eff r Type
@@ -141,7 +149,7 @@ literalType f = do
   PredType cs t' <- runEvalToType t
   assert (null cs) $ return t'
 
-freshn :: Member Fresh r => String -> Eff r T.Name
+freshn :: Member Fresh r => String -> Eff r Name
 freshn base = do
   v <- fresh
   return (base ++ "_" ++ show v)

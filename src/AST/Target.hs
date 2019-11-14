@@ -5,9 +5,11 @@
 {-# LANGUAGE TypeFamilies      #-}
 module AST.Target where
 
+import           AST.Name
+
 import           Data.Functor.Foldable.TH
 
-type Name = String
+
 type PlaceholderId = Int
 
 data Expr
@@ -19,6 +21,7 @@ data Expr
   | Var Name
   | App Expr Expr
   | Lam Name Expr
+  | Nth Int Int Expr
   | Tuple [Expr]
   | Let Name Expr Expr
   | Placeholder PlaceholderId

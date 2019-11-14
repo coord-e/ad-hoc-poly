@@ -39,3 +39,19 @@ rword w = (lexeme . try) (C.string w <* notFollowedBy C.alphaNumChar)
 
 rword_ :: Text -> Parser ()
 rword_ = void . rword
+
+
+integer :: Parser Int
+integer = lexeme L.decimal
+
+real :: Parser Double
+real = try $ lexeme L.float
+
+bool :: Parser Bool
+bool = (== "true") <$> choice [ rword "true", rword "false" ]
+
+quotedChar :: Parser Char
+quotedChar = between (symbol "'") (symbol "'") L.charLiteral
+
+quotedString :: Parser String
+quotedString = symbol "\"" >> manyTill L.charLiteral (symbol "\"")

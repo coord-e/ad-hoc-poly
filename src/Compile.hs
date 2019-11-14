@@ -1,22 +1,30 @@
 module Compile where
 
+import qualified AST.Intermediate as I
 import           Config           (Config, loadConfigFile,
                                    loadDefaultConfigFile)
+import qualified Dictionary       (compile)
 import qualified Emit             (emit)
 import qualified Overload         (compile)
-import qualified Parse            (parse)
+import qualified Parse            (parseIntermediate, parseSource)
 import           Reporting.Result (Result)
 
-import           Control.Monad    ((<=<))
+import           Control.Monad    (join, (<=<))
 import           Data.Text
 import qualified Data.Text.IO     as T
 
 
-compileFile :: Maybe FilePath -> FilePath -> IO (Result String)
-compileFile mconfig file = do
+compileSourceFile :: Maybe FilePath -> FilePath -> IO (Result String)
+compileSourceFile = compileFile (Dictionary.compile <=< Parse.parseSource)
+
+compileIntermediateFile :: Maybe FilePath -> FilePath -> IO (Result String)
+compileIntermediateFile = compileFile Parse.parseIntermediate
+
+compileFile :: (Text -> Result I.Expr) -> Maybe FilePath -> FilePath -> IO (Result String)
+compileFile f mconfig file = do
   config <- maybe loadDefaultConfigFile loadConfigFile mconfig
   content <- T.readFile file
-  return $ flip compile content =<< config
+  return . join $ compile <$> config <*> f content
 
-compile :: Config -> Text -> Result String
-compile c = fmap Emit.emit . Overload.compile c <=< Parse.parse
+compile :: Config -> I.Expr -> Result String
+compile c = fmap Emit.emit . Overload.compile c

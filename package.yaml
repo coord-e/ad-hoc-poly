@@ -42,13 +42,25 @@ library:
   source-dirs: src
 
 executables:
-  constraint-ad-hoc-exe:
-    main:                Main.hs
+  mlx1:
+    main:                Mlx1.hs
     source-dirs:         app
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -main-is Mlx1
+    dependencies:
+    - constraint-ad-hoc
+
+  mlx2:
+    main:                Mlx2.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -main-is Mlx2
     dependencies:
     - constraint-ad-hoc
 

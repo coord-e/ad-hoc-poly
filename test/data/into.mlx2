@@ -1,0 +1,13 @@
+class<T, U> Into {
+  into :: T -> U
+} in
+class<T> Show {
+  show :: T -> String
+} in
+impl<T> Into<T, String> where T: Show {
+  into = show
+} in
+impl Show<Int> {
+  show = string_of_int
+} in
+print_string (into 42)

@@ -1,8 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Overload.Instance where
 
-import qualified AST.Source                as S
-import qualified AST.Target                as T
+import           AST.Name
 import           Overload.Env
 import           Overload.Internal
 import           Overload.Subst
@@ -37,7 +36,7 @@ isInstanceType t1 t2 = do
   s@(Subst m) <- eitherToMaybe $ runUnifies t2 t1
   toMaybe (disjointKeys m $ ftv t1) s
 
-findInstantiation :: (Member (Exc Error) r, Member (Reader Env) r) => S.Name -> TypeScheme -> Eff r (Maybe (TypeScheme, T.Name))
+findInstantiation :: (Member (Exc Error) r, Member (Reader Env) r) => Name -> TypeScheme -> Eff r (Maybe (TypeScheme, Name))
 findInstantiation x s = check =<< mapM (filterM . views _1 $ isInstance s) =<< reader (views (context . instantiations) $ Map.lookup x)
   where
     check (Just [inst]) = return $ Just inst
@@ -45,7 +44,7 @@ findInstantiation x s = check =<< mapM (filterM . views _1 $ isInstance s) =<< r
     check (Just _)      = throwError . TypeError $ OverlappingInstance x s
     check Nothing       = return Nothing
 
-findInstantiationType :: (Member (Exc Error) r, Member (Reader Env) r) => S.Name -> Type -> Eff r (Maybe (TypeScheme, T.Name))
+findInstantiationType :: (Member (Exc Error) r, Member (Reader Env) r) => Name -> Type -> Eff r (Maybe (TypeScheme, Name))
 findInstantiationType x = findInstantiation x . scheme
 
 canBeEliminated :: (Member (Exc Error) r, Member (Reader Env) r) => Constraint -> Eff r Bool

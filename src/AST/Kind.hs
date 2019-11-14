@@ -3,15 +3,12 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
-module Overload.Kind where
+module AST.Kind where
 
-import qualified AST.Kind                 as S
-import           AST.Name
-import           Data.Functor.Foldable
-import           Data.Functor.Foldable.TH
 import           Reporting.Report
 
-import qualified Data.Map                 as Map
+import           Data.Functor.Foldable
+import           Data.Functor.Foldable.TH
 
 
 data Kind
@@ -21,20 +18,6 @@ data Kind
   deriving Show
 
 makeBaseFunctor ''Kind
-
-
-type KindEnv = Map.Map TypeName Kind
-
-initKindEnv :: KindEnv
-initKindEnv = Map.empty
-
-
-evalKind :: S.Kind -> Kind
-evalKind = cata go
-  where
-    go S.StarF          = Star
-    go S.ConstraintF    = Constraint
-    go (S.ArrowF k1 k2) = Arrow k1 k2
 
 
 -- Report instances

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Parse.Kind where
 
-import           AST.Source
+import           AST.Kind
 import           Parse.Internal
 
 import           Control.Monad.Combinators.Expr

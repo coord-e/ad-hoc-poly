@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Parse.Name where
 
-import           AST.Source
+import           AST.Name
 import           Parse.Internal
 
 import           Text.Megaparsec

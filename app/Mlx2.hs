@@ -1,6 +1,6 @@
-module Main where
+module Mlx2 where
 
-import           Compile            (compileFile)
+import           Compile            (compileSourceFile)
 import           Reporting.Report   (printReport)
 
 import           System.Environment (getArgs)
@@ -9,7 +9,7 @@ import           System.Environment (getArgs)
 main :: IO ()
 main = do
   args <- getArgs
-  result <- compileFile Nothing $ head args
+  result <- compileSourceFile Nothing $ head args
   case result of
     Right output -> putStrLn output
     Left err     -> printReport err

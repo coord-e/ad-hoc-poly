@@ -1,0 +1,18 @@
+class<T> Num {
+  add :: T -> T -> T,
+  mul :: T -> T -> T,
+  neg :: T -> T,
+} in
+impl Num<Int> {
+  add = add_int,
+  mul = mul_int,
+  neg = neg_int,
+} in
+impl Num<Float> {
+  add = add_float,
+  mul = mul_float,
+  neg = neg_float,
+} in
+let square = λx. mul x x in
+let x = add (square 3) (int_of_float (square 2.7)) in
+print_int x

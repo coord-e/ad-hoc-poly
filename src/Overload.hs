@@ -1,8 +1,10 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Overload where
 
-import qualified AST.Source                as S
+import qualified AST.Intermediate          as S
+import qualified AST.Kind                  as S
 import qualified AST.Target                as T
+import qualified AST.Type                  as S
 import           Config
 import           Overload.Env
 import           Overload.GlobalInfer

@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 module Overload.GlobalInfer where
 
-import qualified AST.Source                as S
+import qualified AST.Intermediate          as S
 import qualified AST.Target                as T
 import           Overload.Env
 import           Overload.Instance

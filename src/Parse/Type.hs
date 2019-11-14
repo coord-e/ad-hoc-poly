@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Parse.Type (typeName, type_, typeScheme) where
 
-import           AST.Source                     hiding (type_)
+import           AST.Type                       hiding (type_)
 import           Parse.Internal
 import           Parse.Name
 
