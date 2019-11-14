@@ -52,5 +52,20 @@ convertClass (S.ClassDecl as cls cs ms) m = eType <$> local (Map.insert cls name
     eOver = T.Over tScheme . eLet
     eLet e = ifoldr (\i x -> T.Let x (T.Nth len i (T.Var dName))) e names
 
-convertImpl :: Member (Reader Env) r => S.ImplDecl -> T.Expr -> Eff r T.Expr
-convertImpl = undefined
+convertImpl :: (Member (Exc Error) r, Member (Reader Env) r) => S.ImplDecl -> T.Expr -> Eff r T.Expr
+convertImpl (S.ImplDecl as cls tgt cs ms) e = do
+  impls <- Map.fromList <$> mapM (secondM convert) ms
+  defs <- fromMaybeM (throwError . DictionaryError $ UndeclaredClass cls) $ reader (Map.lookup cls)
+  tSatisfy . T.Tuple <$> buildTuple impls defs
+  where
+    tName = cls
+    tConstraint = foldl T.TApp (T.TName tName) tgt
+    tPredicated = foldr (\(t, c) -> T.TPredicate (T.TApp (T.TName c) t)) tConstraint cs
+    tScheme = T.Forall as tPredicated
+    tSatisfy tup = T.Satisfy tScheme tup e
+    buildTuple = mapM . findImpl
+    findImpl impls k = maybe (throwError . DictionaryError $ MissingImpl cls k) pure $ Map.lookup k impls
+
+
+secondM :: Functor f => (b -> f c) -> (a, b) -> f (a, c)
+secondM f (x, y) = (x,) <$> f y
