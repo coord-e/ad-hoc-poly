@@ -8,4 +8,4 @@ import           Reporting.Result   (Result)
 
 
 compile :: S.Expr -> Result T.Expr
-compile = Right . runConvert
+compile = runConvert

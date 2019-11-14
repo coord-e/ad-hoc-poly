@@ -1,22 +1,28 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TupleSections    #-}
 module Dictionary.Convert where
 
-import qualified AST.Intermediate          as T
-import qualified AST.Source                as S
-import qualified AST.Type                  as T
+import qualified AST.Intermediate           as T
+import qualified AST.Source                 as S
+import qualified AST.Type                   as T
 import           Dictionary.Env
+import           Reporting.Error
+import           Reporting.Error.Dictionary
+import           Reporting.Result
 
 import           Control.Eff
+import           Control.Eff.Exception
 import           Control.Eff.Reader.Strict
-import           Control.Lens.Indexed      (ifoldr)
+import           Control.Lens.Indexed       (ifoldr)
+import           Control.Monad.Extra        (fromMaybeM)
 import           Data.Bifunctor
-import qualified Data.Map                  as Map
+import qualified Data.Map                   as Map
 
 
-runConvert :: S.Expr -> T.Expr
-runConvert = run . runReader initEnv . convert
+runConvert :: S.Expr -> Result T.Expr
+runConvert = run . runError . runReader initEnv . convert
 
-convert :: Member (Reader Env) r => S.Expr -> Eff r T.Expr
+convert :: (Member (Exc Error) r, Member (Reader Env) r) => S.Expr -> Eff r T.Expr
 convert (S.Int i)       = return $ T.Int i
 convert (S.Char c)      = return $ T.Char c
 convert (S.Str s)       = return $ T.Str s
