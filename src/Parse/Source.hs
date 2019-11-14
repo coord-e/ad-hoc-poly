@@ -85,7 +85,7 @@ class_ = do
 impl :: Parser Expr
 impl = do
   rword_ "impl"
-  as <- intros
+  as <- intros <|> pure []
   cls <- typeName
   symbol "<"
   tgt <- type_ `sepBy1` symbol ","
