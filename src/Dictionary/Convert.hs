@@ -13,6 +13,7 @@ import           Reporting.Result
 import           Control.Eff
 import           Control.Eff.Exception
 import           Control.Eff.Reader.Strict
+import           Control.Exception          (assert)
 import           Control.Lens.Indexed       (ifoldr)
 import           Control.Monad.Extra        (fromMaybeM)
 import           Data.Bifunctor
@@ -43,29 +44,36 @@ convertClass (S.ClassDecl as cls cs ms) m = eType <$> local (Map.insert cls name
   where
     dName = "d" ++ cls
     tName = cls
-    len = length ms
-    (names, dTuple) = second T.TTuple $ unzip ms
+    -- NOTE: `getter i dict` evaluates to T.Expr representing `i`-th element of `dict`
+    getter = case length ms of
+      1 -> \i -> assert (i == 0) id
+      n -> T.Nth n
+    toDictTy [x] = x
+    toDictTy ts  = T.TTuple ts
+    (names, dTuple) = second toDictTy $ unzip ms
     tConstraint = T.TConstraint dName dTuple
     tPredicated = foldr (\(t, c) -> T.TPredicate (T.TApp (T.TName c) t)) tConstraint cs
     tCon = foldr T.TLam tPredicated as
     tScheme = T.Forall as (foldl (\acc -> T.TApp acc . T.TVar) (T.TName tName) as)
     eType = T.Type tName tCon . eOver
     eOver = T.Over tScheme . eLet
-    eLet e = ifoldr (\i x -> T.Let x (T.Nth len i (T.Var dName))) e names
+    eLet e = ifoldr (\i x -> T.Let x (getter i (T.Var dName))) e names
 
 convertImpl :: (Member (Exc Error) r, Member (Reader Env) r) => S.ImplDecl -> T.Expr -> Eff r T.Expr
 convertImpl (S.ImplDecl as cls tgt cs ms) e = do
   impls <- Map.fromList <$> mapM (secondM convert) ms
   defs <- fromMaybeM (throwError . DictionaryError $ UndeclaredClass cls) $ reader (Map.lookup cls)
-  tSatisfy . T.Tuple <$> buildTuple impls defs
+  tSatisfy . toDict <$> buildDict impls defs
   where
     tName = cls
     tConstraint = foldl T.TApp (T.TName tName) tgt
     tPredicated = foldr (\(t, c) -> T.TPredicate (T.TApp (T.TName c) t)) tConstraint cs
     tScheme = T.Forall as $ varify as tPredicated
     tSatisfy tup = T.Satisfy tScheme tup e
-    buildTuple = mapM . findImpl
+    buildDict = mapM . findImpl
     findImpl impls k = maybe (throwError . DictionaryError $ MissingImpl cls k) pure $ Map.lookup k impls
+    toDict [x] = x
+    toDict xs  = T.Tuple xs
 
 
 varify :: [String] -> T.Type -> T.Type
