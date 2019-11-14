@@ -31,6 +31,7 @@ import           Control.Eff.State.Strict
 import           Control.Eff.Writer.Strict
 import           Control.Exception         (assert)
 import           Control.Lens
+import           Control.Monad             (replicateM)
 import           Control.Monad.Extra       (fromMaybeM, maybeM, unlessM)
 import           Data.Foldable             (foldlM)
 import qualified Data.Map                  as Map
@@ -42,6 +43,11 @@ localInfer (S.Char c)   = (, T.Char c) <$> literalType char
 localInfer (S.Str s)    = (, T.Str s) <$> literalType string
 localInfer (S.Real f)   = (, T.Real f) <$> literalType real
 localInfer (S.Bool b)   = (, T.Bool b) <$> literalType boolean
+localInfer (S.Nth n i e)  = do
+  ts <- replicateM n (TVar <$> freshv)
+  (t, e') <- localInfer e
+  unify (TTuple ts) t
+  return (ts !! i, T.Nth n i e')
 localInfer (S.Tuple xs) = bimap TTuple T.Tuple . unzip <$> mapM localInfer xs
 localInfer (S.Lam x e)  = do
   tv <- TVar <$> freshv
