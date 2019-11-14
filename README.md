@@ -1,5 +1,7 @@
 # ad-hoc-poly
 
+[![Travis](https://img.shields.io/travis/com/coord-e/ad-hoc-poly)](https://travis-ci.com/coord-e/ad-hoc-poly)
+
 `ad-hoc-poly` is an implementation of ad-hoc polymorphism and type classes.
 
 ## Try
