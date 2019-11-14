@@ -35,15 +35,13 @@ And perform translation with:
 stack run mlx2 -- sample.mlx2
 ```
 
-You'll see translated well-formed OCaml code which is printed to stdout.
-
-You can find more examples under [test/data](test/data). Also you can configure the type environment by editing [env.yaml](env.yaml). Enjoy!
+You can find more examples under [test/data](test/data). Also, you can configure the type environment by editing [env.yaml](env.yaml). Enjoy!
 
 ## Two languages
 
 ### `mlx1`
 
-`mlx1` is a language with overloadings. A type-directed translation pass resolves overloadings and compiles `mlx1` to well-typed OCaml code.
+`mlx1` is a language with overloadings. A type-directed translation pass resolves overloadings and compiles `mlx1` into well-typed OCaml code.
 
 ### `mlx2`
 
@@ -61,13 +59,13 @@ A. No.
 
 ### Q. Why is mlx2 syntax designed to look like Rust's traits, but not Haskell's type classes?
 
-A: To separate two compilation phases.
+A. To separate two compilation phases.
 
 To perform the dictionary conversion, it is needed to identify each class declaration.
 
 `class` and `instance` declarations take type expressions to represent constraints and instantiations in Haskell-like syntax. Thus, a type evaluation is required to identify the class declarations. I don't want this because the translation from `mlx1` to OCaml also requires type evaluation.
 
-`class` and `instance` declarations in `mlx2` syntax take class names as a simple identifier and I can implement dictionary conversion easily because of it.
+`class` and `impl` declarations in `mlx2` syntax take class names as a simple identifier and I can implement dictionary conversion easily because of it.
 
 ### Q. Is it necessary to introduce type-level lambda like this implementation to implement ad-hoc polymorphism?
 
