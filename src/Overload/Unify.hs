@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TupleSections    #-}
 module Overload.Unify where
 
 import           Overload.Env
