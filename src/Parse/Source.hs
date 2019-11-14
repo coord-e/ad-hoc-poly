@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Parse.Source where
 
-import           AST.Literal
 import           AST.Name
 import           AST.Source
 import           AST.Type                       hiding (type_)
 import           Parse.Internal
+import           Parse.Literal
 import           Parse.Name
 import           Parse.Type
 
@@ -20,12 +20,8 @@ term = try (parens expr)
   <|> class_
   <|> impl
   <|> lambda
-  <|> Lit . Bool <$> bool
+  <|> Lit <$> literal
   <|> Var <$> name
-  <|> Lit . Real <$> real
-  <|> Lit . Int <$> integer
-  <|> Lit . Char <$> quotedChar
-  <|> Lit . Str <$> quotedString
 
 table :: [[Operator Parser Expr]]
 table =
