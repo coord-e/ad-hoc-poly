@@ -4,6 +4,7 @@
 module Overload.LocalInfer where
 
 import qualified AST.Intermediate          as S
+import qualified AST.Literal               as S
 import           AST.Name
 import qualified AST.Target                as T
 import qualified AST.Type                  as S
@@ -38,11 +39,11 @@ import qualified Data.Map                  as Map
 
 
 localInfer :: S.Expr -> Eff '[Writer Candidate, Fresh, Reader Env, State Constraints, Exc Error] (Type, T.Expr)
-localInfer (S.Int i)    = (, T.Int i) <$> literalType integer
-localInfer (S.Char c)   = (, T.Char c) <$> literalType char
-localInfer (S.Str s)    = (, T.Str s) <$> literalType string
-localInfer (S.Real f)   = (, T.Real f) <$> literalType real
-localInfer (S.Bool b)   = (, T.Bool b) <$> literalType boolean
+localInfer (S.Lit l@(S.Int _))    = (, T.Lit l) <$> literalType integer
+localInfer (S.Lit l@(S.Char _))   = (, T.Lit l) <$> literalType char
+localInfer (S.Lit l@(S.Str _))    = (, T.Lit l) <$> literalType string
+localInfer (S.Lit l@(S.Real _))   = (, T.Lit l) <$> literalType real
+localInfer (S.Lit l@(S.Bool _))   = (, T.Lit l) <$> literalType boolean
 localInfer (S.Nth n i e)  = do
   ts <- replicateM n (TVar <$> freshv)
   (t, e') <- localInfer e

@@ -2,6 +2,7 @@
 module Parse.Intermediate where
 
 import           AST.Intermediate
+import           AST.Literal
 import           Parse.Internal
 import           Parse.Name
 import           Parse.Type
@@ -18,12 +19,12 @@ term = try (parens expr)
   <|> over
   <|> satisfy
   <|> lambda
-  <|> Bool <$> bool
+  <|> Lit . Bool <$> bool
   <|> Var <$> name
-  <|> Real <$> real
-  <|> Int <$> integer
-  <|> Char <$> quotedChar
-  <|> Str <$> quotedString
+  <|> Lit . Real <$> real
+  <|> Lit . Int <$> integer
+  <|> Lit . Char <$> quotedChar
+  <|> Lit . Str <$> quotedString
 
 table :: [[Operator Parser Expr]]
 table =
