@@ -5,6 +5,7 @@ import           AST.Name
 import           AST.Source
 import           AST.Type                       hiding (type_)
 import           Parse.Internal
+import           Parse.Literal
 import           Parse.Name
 import           Parse.Type
 
@@ -19,12 +20,8 @@ term = try (parens expr)
   <|> class_
   <|> impl
   <|> lambda
-  <|> Bool <$> bool
+  <|> Lit <$> literal
   <|> Var <$> name
-  <|> Real <$> real
-  <|> Int <$> integer
-  <|> Char <$> quotedChar
-  <|> Str <$> quotedString
 
 table :: [[Operator Parser Expr]]
 table =

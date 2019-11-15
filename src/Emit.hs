@@ -1,5 +1,6 @@
 module Emit where
 
+import           AST.Literal
 import           AST.Target
 import           Reporting.Report      (paren)
 
@@ -13,11 +14,11 @@ emit :: Expr -> String
 emit = cata go
   where
     bars = flip replicate "_"
-    go (IntF i)         = show i
-    go (CharF c)        = show c
-    go (StrF s)         = show s
-    go (RealF f)        = show f
-    go (BoolF b)        = bool "false" "true" b
+    go (LitF (Int i))   = show i
+    go (LitF (Char c))  = show c
+    go (LitF (Str s))   = show s
+    go (LitF (Real f))  = show f
+    go (LitF (Bool b))  = bool "false" "true" b
     go (VarF n)         = n
     go (AppF e1 e2)     = e1 ++ " " ++ paren e2
     go (LamF n e)       = paren ("fun " ++ n ++ " -> " ++ e)

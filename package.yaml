@@ -33,6 +33,7 @@ dependencies:
 - yaml
 - aeson
 - text
+- array
 
 ghc-options:
 - -Wall

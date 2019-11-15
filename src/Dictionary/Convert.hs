@@ -25,11 +25,7 @@ runConvert :: S.Expr -> Result T.Expr
 runConvert = run . runError . runReader initEnv . convert
 
 convert :: (Member (Exc Error) r, Member (Reader Env) r) => S.Expr -> Eff r T.Expr
-convert (S.Int i)       = return $ T.Int i
-convert (S.Char c)      = return $ T.Char c
-convert (S.Str s)       = return $ T.Str s
-convert (S.Real f)      = return $ T.Real f
-convert (S.Bool b)      = return $ T.Bool b
+convert (S.Lit l)       = return $ T.Lit l
 convert (S.Var x)       = return $ T.Var x
 convert (S.App a b)     = T.App <$> convert a <*> convert b
 convert (S.Lam x body)  = T.Lam x <$> convert body

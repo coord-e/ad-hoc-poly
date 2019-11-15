@@ -5,6 +5,7 @@
 {-# LANGUAGE TypeFamilies      #-}
 module AST.Target where
 
+import           AST.Literal
 import           AST.Name
 
 import           Data.Functor.Foldable.TH
@@ -13,11 +14,7 @@ import           Data.Functor.Foldable.TH
 type PlaceholderId = Int
 
 data Expr
-  = Int Int
-  | Char Char
-  | Str String
-  | Real Double
-  | Bool Bool
+  = Lit Literal
   | Var Name
   | App Expr Expr
   | Lam Name Expr

@@ -5,6 +5,7 @@
 {-# LANGUAGE TypeFamilies      #-}
 module AST.Source where
 
+import           AST.Literal
 import           AST.Name
 import           AST.Type
 import           Reporting.Report
@@ -33,11 +34,7 @@ data ImplDecl
 
 
 data Expr
-  = Int Int
-  | Char Char
-  | Str String
-  | Real Double
-  | Bool Bool
+  = Lit Literal
   | Var Name
   | App Expr Expr
   | Lam Name Expr
@@ -76,11 +73,7 @@ instance Report ImplDecl where
 instance Report Expr where
   report = cata go
     where
-      go (IntF i)       = show i
-      go (CharF c)      = show c
-      go (StrF s)       = show s
-      go (RealF f)      = show f
-      go (BoolF b)      = show b
+      go (LitF l)       = report l
       go (VarF x)       = x
       go (AppF e1 e2)   = paren (e1 ++ " " ++ e2)
       go (LamF x e)     = paren ("λ" ++ x ++ ". " ++ e)

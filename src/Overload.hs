@@ -3,12 +3,14 @@ module Overload where
 
 import qualified AST.Intermediate          as S
 import qualified AST.Kind                  as S
+import           AST.Literal
 import qualified AST.Target                as T
 import qualified AST.Type                  as S
-import           Config
+import           Config                    hiding (literalTypes)
 import           Overload.Env
 import           Overload.GlobalInfer
-import           Overload.Kind             (evalKind)
+import           Overload.Kind             (Kind (..), evalKind)
+import           Overload.KindInfer        (kindTo)
 import           Overload.LocalInfer       (withBinding)
 import           Overload.Type
 import           Overload.TypeEval
@@ -22,24 +24,44 @@ import           Control.Eff.Exception
 import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
 import           Control.Eff.State.Strict
+import           Control.Exception         (assert)
+import           Control.Lens
 import           Control.Monad             (unless)
 import qualified Data.Map                  as Map
 
 
 compile :: Config -> S.Expr -> Result T.Expr
 compile (Config bases lits binds) e = do
-  ((PredType cstrs _, e'), cs) <- run . runError . runState initConstraints . runReader (mkInitEnv bases lits) . runFresh' 0 . loadBindings binds $ globalInfer e
+  ((PredType cstrs _, e'), cs) <- run
+                                  . runError
+                                  . runState initConstraints
+                                  . runReader (mkInitEnv bases)
+                                  . runFresh' 0
+                                  . loadLitTypes lits
+                                  . loadBindings binds
+                                  $ globalInfer e
   _ <- runSolve cs
   unless (null cstrs) (Left . TypeError $ UnresolvedVariable cstrs)
   return e'
 
 
-mkInitEnv :: Map.Map String S.Kind -> LiteralTypes -> Env
-mkInitEnv m = Env initContext kindenv typeenv
+-- NOTE: `literalTypes` in `Env` is left undefined here and is initialized in `loadLitTypes`
+mkInitEnv :: Map.Map String S.Kind -> Env
+mkInitEnv m = Env initContext kindenv typeenv undefined
   where
     kindenv = Map.map evalKind m
     typeenv = Map.mapWithKey go m
     go = const . PredSem [] . SType . TBase
+
+loadLitTypes :: (Member Fresh r, Member (Reader Env) r, Member (Exc Error) r) => MapLit S.Type -> Eff r a -> Eff r a
+loadLitTypes lits m = do
+  lits' <- mapM go lits
+  local (set literalTypes lits') m
+  where
+    go t = do
+      kindTo t Star
+      PredType cs t' <- runEvalToType t
+      assert (null cs) $ return t'
 
 loadBindings :: (Member Fresh r, Member (Reader Env) r) => Map.Map String S.TypeScheme -> Eff r a -> Eff r a
 loadBindings = flip $ Map.foldrWithKey go
