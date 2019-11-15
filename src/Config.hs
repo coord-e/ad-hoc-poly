@@ -1,9 +1,11 @@
-{-# LANGUAGE NamedFieldPuns    #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE OverloadedStrings    #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Config where
 
 import           AST.Kind
+import           AST.Literal
 import           AST.Type         hiding (type_)
 import qualified Parse.Internal   as P (Parser)
 import           Parse.Kind       (kind)
@@ -11,26 +13,18 @@ import           Parse.Type       (typeScheme, type_)
 import           Reporting.Error
 
 import           Data.Aeson.Types (typeMismatch)
+import qualified Data.Array       as Array
 import           Data.Bifunctor
 import qualified Data.Map         as Map
 import           Data.Text
-import           Data.Yaml
+import           Data.Yaml        hiding (Bool)
 import           Text.Megaparsec  (errorBundlePretty, parse)
 
 
-data LiteralTypes
-  = LiteralTypes { integer :: Type
-                 , real    :: Type
-                 , char    :: Type
-                 , boolean :: Type
-                 , string  :: Type }
-  deriving Show
-
 data Config
   = Config { baseTypes    :: Map.Map String Kind
-           , literalTypes :: LiteralTypes
+           , literalTypes :: MapLit Type
            , bindings     :: Map.Map String TypeScheme }
-  deriving Show
 
 
 instance FromJSON Type where
@@ -45,14 +39,15 @@ instance FromJSON Kind where
   parseJSON (String text) = parseAndBundle kind text
   parseJSON o             = typeMismatch "String" o
 
-instance FromJSON LiteralTypes where
-  parseJSON (Object v) = do
-    integer <- v .: "integer"
-    real <- v .: "real"
-    char <- v .: "char"
-    boolean <- v .: "boolean"
-    string <- v .: "string"
-    return $ LiteralTypes { integer, real, char, boolean, string }
+instance FromJSON (MapLit Type) where
+  parseJSON (Object v) = mapM (v .:) ary
+    where
+      ary = Array.array (minBound, maxBound)
+        [ (litK Int, "integer")
+        , (litK Char, "char")
+        , (litK Str, "string")
+        , (litK Real, "real")
+        , (litK Bool, "boolean") ]
   parseJSON o = typeMismatch "Object" o
 
 instance FromJSON Config where

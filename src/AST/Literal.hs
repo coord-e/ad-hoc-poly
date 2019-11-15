@@ -4,8 +4,8 @@ module AST.Literal where
 
 import           Reporting.Report
 
+import           Data.Array
 import           Data.Data
-import           Data.Ix
 
 
 data Literal
@@ -19,6 +19,10 @@ data Literal
 
 newtype LiteralKind = LiteralKind Int deriving (Ix, Eq, Ord)
 
+instance Bounded LiteralKind where
+  minBound = LiteralKind 1
+  maxBound = LiteralKind . maxConstrIndex . dataTypeOf $ (undefined :: Literal)
+
 toKind :: Literal -> LiteralKind
 toKind l = LiteralKind i
   where
@@ -26,6 +30,8 @@ toKind l = LiteralKind i
 
 litK :: (a -> Literal) -> LiteralKind
 litK c = toKind $ c (undefined :: a)
+
+type MapLit a = Array LiteralKind a
 
 
 -- Report instances
