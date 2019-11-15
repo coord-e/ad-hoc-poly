@@ -15,8 +15,7 @@ import           Overload.Internal
 import qualified Overload.Kind             as K
 import           Overload.KindInfer        (kind, kindTo)
 import           Overload.Type
-import           Overload.TypeEval         (runEval, runEvalToType,
-                                            runSchemeEval)
+import           Overload.TypeEval         (runEval, runSchemeEval)
 import           Overload.Unify
 import           Overload.Var
 import           Reporting.Error
@@ -29,7 +28,6 @@ import           Control.Eff.Fresh
 import           Control.Eff.Reader.Strict
 import           Control.Eff.State.Strict
 import           Control.Eff.Writer.Strict
-import           Control.Exception         (assert)
 import           Control.Lens
 import           Control.Monad             (replicateM)
 import           Control.Monad.Extra       (fromMaybeM, maybeM, unlessM)
