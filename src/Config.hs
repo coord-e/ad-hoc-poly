@@ -18,7 +18,7 @@ import           Data.Bifunctor
 import qualified Data.Map         as Map
 import           Data.Text
 import           Data.Yaml        hiding (Bool)
-import           Text.Megaparsec  (errorBundlePretty, parse)
+import           Text.Megaparsec  (eof, errorBundlePretty, parse)
 
 
 data Config
@@ -60,7 +60,7 @@ instance FromJSON Config where
 
 parseAndBundle :: P.Parser a -> Text -> Parser a
 parseAndBundle p input =
-  case parse p "" input of
+  case parse (p <* eof) "" input of
     Left err -> fail $ errorBundlePretty err
     Right s  -> return s
 
