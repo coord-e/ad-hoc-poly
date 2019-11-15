@@ -1,8 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Overload.Env where
 
+import           AST.Literal
 import           AST.Name
-import           Config
 import           Overload.Kind
 import           Overload.Subst
 import           Overload.Type
@@ -29,7 +29,7 @@ data Env
   = Env { _context      :: Context
         , _kindEnv      :: KindEnv
         , _typeEnv      :: TypeEnv
-        , _literalTypes :: LiteralTypes }
+        , _literalTypes :: MapLit Type }
 
 makeLenses ''Env
 

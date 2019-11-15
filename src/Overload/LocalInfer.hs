@@ -8,7 +8,6 @@ import qualified AST.Literal               as S
 import           AST.Name
 import qualified AST.Target                as T
 import qualified AST.Type                  as S
-import           Config                    (LiteralTypes (..))
 import           Overload.Env
 import {-# SOURCE #-} Overload.GlobalInfer
 import           Overload.Instance
@@ -34,16 +33,13 @@ import           Control.Exception         (assert)
 import           Control.Lens
 import           Control.Monad             (replicateM)
 import           Control.Monad.Extra       (fromMaybeM, maybeM, unlessM)
+import qualified Data.Array                as Array
 import           Data.Foldable             (foldlM)
 import qualified Data.Map                  as Map
 
 
 localInfer :: S.Expr -> Eff '[Writer Candidate, Fresh, Reader Env, State Constraints, Exc Error] (Type, T.Expr)
-localInfer (S.Lit l@(S.Int _))    = (, T.Lit l) <$> literalType integer
-localInfer (S.Lit l@(S.Char _))   = (, T.Lit l) <$> literalType char
-localInfer (S.Lit l@(S.Str _))    = (, T.Lit l) <$> literalType string
-localInfer (S.Lit l@(S.Real _))   = (, T.Lit l) <$> literalType real
-localInfer (S.Lit l@(S.Bool _))   = (, T.Lit l) <$> literalType boolean
+localInfer (S.Lit l) = (, T.Lit l) <$> literalType (S.toLitKind l)
 localInfer (S.Nth n i e)  = do
   ts <- replicateM n (TVar <$> freshv)
   (t, e') <- localInfer e
@@ -142,13 +138,8 @@ withBindingType x = withBinding x . scheme
 withOverload :: Member (Reader Env) r => Name -> TypeScheme -> Eff r a -> Eff r a
 withOverload x t = local (over (context . overloads) (Map.insert x t))
 
-literalType :: (Member (Exc Error) r, Member (Reader Env) r, Member Fresh r) => (LiteralTypes -> S.Type) -> Eff r Type
-literalType f = do
-  -- TODO: it is inefficient to evalutate S.TypeScheme at every literals' occurence
-  t <- f <$> reader (view literalTypes)
-  kindTo t K.Star
-  PredType cs t' <- runEvalToType t
-  assert (null cs) $ return t'
+literalType :: (Member (Exc Error) r, Member (Reader Env) r, Member Fresh r) => S.LiteralKind -> Eff r Type
+literalType k = (Array.! k) <$> reader (view literalTypes)
 
 freshn :: Member Fresh r => String -> Eff r Name
 freshn base = do

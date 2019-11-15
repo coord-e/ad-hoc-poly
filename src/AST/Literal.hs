@@ -23,13 +23,13 @@ instance Bounded LiteralKind where
   minBound = LiteralKind 1
   maxBound = LiteralKind . maxConstrIndex . dataTypeOf $ (undefined :: Literal)
 
-toKind :: Literal -> LiteralKind
-toKind l = LiteralKind i
+toLitKind :: Literal -> LiteralKind
+toLitKind l = LiteralKind i
   where
     AlgConstr i = constrRep (toConstr l)
 
 litK :: (a -> Literal) -> LiteralKind
-litK c = toKind $ c (undefined :: a)
+litK c = toLitKind $ c (undefined :: a)
 
 type MapLit a = Array LiteralKind a
 
