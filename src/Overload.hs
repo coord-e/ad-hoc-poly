@@ -63,9 +63,10 @@ loadLitTypes lits m = do
       PredType cs t' <- runEvalToType t
       assert (null cs) $ return t'
 
-loadBindings :: (Member Fresh r, Member (Reader Env) r) => Map.Map String S.TypeScheme -> Eff r a -> Eff r a
+loadBindings :: (Member Fresh r, Member (Reader Env) r, Member (Exc Error) r) => Map.Map String S.TypeScheme -> Eff r a -> Eff r a
 loadBindings = flip $ Map.foldrWithKey go
   where
-    go x s e = do
+    go x s@(S.Forall _ t) e = do
+      kindTo t Star
       s' <- runSchemeEvalToType s
       withBinding x s' e
