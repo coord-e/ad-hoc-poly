@@ -6,9 +6,9 @@
 
 ## Try
 
-`ad-hoc-poly` works as a transpiler from the project-specific language (named `mlx1` and `mlx2`) to OCaml.
+`ad-hoc-poly` works as a transpiler to OCaml. There are two source languages named `mlx1` and `mlx2`.
 
-Save the code below as `sample.mlx2`:
+To see how this works, save the code below as `sample.mlx2`:
 
 ```ocaml
 class<T> Num {
