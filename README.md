@@ -92,3 +92,7 @@ I've implemented this as two-pass compilation just for simplicity.
 A. No.
 
 AFAIK, higher order unification is required to introduce HKT in a system with type lambdas. To keep simplicity, I didn't implemented that.
+
+## Bibliography
+
+- Wadler, Philip, and Stephen Blott. "How to make ad-hoc polymorphism less ad hoc." Proceedings of the 16th ACM SIGPLAN-SIGACT symposium on Principles of programming languages. ACM, 1989.
