@@ -4,7 +4,7 @@
 
 `ad-hoc-poly` is an implementation of ad-hoc polymorphism and type classes.
 
-## Try
+## Try it out
 
 `ad-hoc-poly` works as a transpiler to OCaml. There are two source languages named `mlx1` and `mlx2`.
 
@@ -50,6 +50,12 @@ You can find more examples under [test/data](test/data). Also, you can configure
 `mlx2` is a language with type classes. `mlx2` is desugared to `mlx1`.
 
 ## FAQ
+
+### Q. Is "default implementation" supported in this implementation?
+
+A. Currently, No.
+
+See #1.
 
 ### Q. I don't want to enter non-ascii symbols such as `∀` or `λ`
 
