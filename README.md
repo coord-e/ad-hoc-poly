@@ -55,7 +55,7 @@ You can find more examples under [test/data](test/data). Also, you can configure
 
 A. Currently, No.
 
-See #1.
+See [#1](https://github.com/coord-e/ad-hoc-poly/issues/1).
 
 ### Q. I don't want to enter non-ascii symbols such as `∀` or `λ`
 
