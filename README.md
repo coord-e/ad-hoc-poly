@@ -2,7 +2,7 @@
 
 [![Travis](https://img.shields.io/travis/com/coord-e/ad-hoc-poly)](https://travis-ci.com/coord-e/ad-hoc-poly)
 
-`ad-hoc-poly` is an implementation of ad-hoc polymorphism and type classes.
+`ad-hoc-poly` is an implementation of type classes.
 
 ## Try it out
 
@@ -43,11 +43,11 @@ You can find more examples under [test/data](test/data). Also, you can configure
 
 ### `mlx1`
 
-`mlx1` is a language with overloadings. A type-directed translation pass resolves overloadings and compiles `mlx1` into well-typed OCaml code.
+`mlx1` is a language with type classes. A type-directed translation pass resolves overloadings and compiles `mlx1` into well-typed OCaml code.
 
 ### `mlx2`
 
-`mlx2` is a language with type classes. `mlx2` is desugared to `mlx1`.
+`mlx2` is a language with a syntax like Rust's traits. `mlx2` is desugared to `mlx1`.
 
 ## FAQ
 
@@ -61,10 +61,6 @@ See [#1](https://github.com/coord-e/ad-hoc-poly/issues/1).
 
 A. You can use `forall` for `∀` and `\` for `λ` and `Λ`.
 
-### Q. Is this implementation proven to be correct?
-
-A. No.
-
 ### Q. Why is mlx2 syntax designed to look like Rust's traits, but not Haskell's type classes?
 
 A. To separate two compilation phases.
@@ -75,11 +71,15 @@ To perform the dictionary conversion, it is needed to identify each class declar
 
 `class` and `impl` declarations in `mlx2` syntax take class names as a simple identifier and I can implement dictionary conversion easily because of it.
 
-### Q. Is it necessary to introduce type-level lambda like this implementation to implement ad-hoc polymorphism?
+### Q. Is it necessary to introduce type-level lambda like this implementation to implement type classes?
 
 A. No.
 
 Haskell is one of the major conterexamples.
+
+### Q. Is this algorithm proven to be decidable and coherent?
+
+A. No.
 
 ### Q. Is it feasible to implement this in one-pass?
 
@@ -90,8 +90,6 @@ I've implemented this as two-pass compilation just for simplicity.
 ### Q. Does this implementation support higher-kinded types (HKT)?
 
 A. No.
-
-AFAIK, higher order unification is required to introduce HKT in a system with type lambdas. To keep simplicity, I didn't implemented that.
 
 ## Bibliography
 
